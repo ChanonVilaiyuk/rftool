@@ -99,12 +99,12 @@ def get_task(entityType, userEntity, projectEntity, episodeEntity, stepEntity):
 
 def get_tasks(entity):
 	filters = [['entity', 'is', entity]]
-	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step']
+	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app']
 	return sg.find('Task', filters, fields)
 
 def get_tasks_by_step(entity, step):
 	filters = [['entity', 'is', entity], ['step.Step.code', 'is', step]]
-	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step']
+	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app']
 	return sg.find('Task', filters, fields)
 
 def get_one_task(entity,task):
@@ -132,13 +132,14 @@ def get_list_field(field) :
 
 ####################### create ########################
 
-def create_asset(project, assetType, assetSubType, assetName, episode=None, template='default'):
-	if template == 'default':
-		taskTemplate = {'code': 'dm_asset_md_template', 'type': 'TaskTemplate', 'id': 75}
-	if template == 'lo':
-		taskTemplate = {'code': 'dm_asset_pxy_template', 'type': 'TaskTemplate', 'id': 77}
-	if template == 'hi':
-		taskTemplate = {'code': 'dm_asset_hi_template', 'type': 'TaskTemplate', 'id': 76}
+def create_asset(project, assetType, assetSubType, assetName, episode=None, template='default', taskTemplate=None):
+	if not taskTemplate:
+		if template == 'default':
+			taskTemplate = {'code': 'th_ch_asset_md_template', 'type': 'TaskTemplate', 'id': 110}
+		if template == 'lo':
+			taskTemplate = {'code': 'dm_asset_pxy_template', 'type': 'TaskTemplate', 'id': 77}
+		if template == 'hi':
+			taskTemplate = {'code': 'dm_asset_hi_template', 'type': 'TaskTemplate', 'id': 76}
 
 	data = dict()
 	if episode:
@@ -161,11 +162,12 @@ def create_sequence(project, episode, sequenceName, shortCode):
 
 	return result
 
-def create_shot(project, episode, sequence, shotName, shortCode, template='default', startFrame=None, endFrame=None, duration=None):
+def create_shot(project, episode, sequence, shotName, shortCode, template='default', taskTemplate=None, startFrame=None, endFrame=None, duration=None):
 	result = sg.find_one('Shot', [['project', 'is', project], ['code', 'is', shotName]], ['id', 'code'])
 	if not result:
-		if template == 'default':
-			taskTemplate = {'code': 'dm_shot_template', 'type': 'TaskTemplate', 'id': 78}
+		if not taskTemplate:
+			if template == 'default':
+				taskTemplate = {'code': 'dm_shot_template', 'type': 'TaskTemplate', 'id': 78}
 
 		projCode = project.get('sg_project_code')
 		data = {'project': project, 'sg_episode': episode, 'sg_sequence': sequence, 'sg_shortcode': shortCode, 'code': shotName, 'task_template': taskTemplate}
@@ -240,7 +242,7 @@ def taskFilters(entityType, userEntity, projectEntity, episodeEntity, stepEntity
 	return filters
 
 def taskFields(entityType) :
-	fields = ['content', 'entity', 'step', 'project', 'sg_status_list', 'task_assignees']
+	fields = ['content', 'entity', 'step', 'project', 'sg_status_list', 'task_assignees', 'sg_app']
 	assetFields = ['entity.Asset.code', 'entity.Asset.sg_asset_type', 'entity.Asset.sg_subtype', 'entity.Asset.scenes']
 	shotFields = ['entity.Shot.code', 'entity.Shot.sg_sequence', 'entity.Shot.sg_scene', 'entity.Shot.sg_scene']
 

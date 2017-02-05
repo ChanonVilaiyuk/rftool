@@ -21,8 +21,10 @@ class PathInfo(object):
         super(PathInfo, self).__init__()
 
         # get current scene
+        self.activeApp = 'maya'
         if not path and isMaya:
             path = mc.file(q=True, loc=True)
+            self.activeApp = 'maya'
         self.path = path
         self.input = 'path'
 
@@ -134,8 +136,12 @@ class PathInfo(object):
         return self.projPath.split('/')[5]
 
     @property
-    def workspace(self):
+    def application(self):
         return self.projPath.split('/')[6]
+
+    @property
+    def workspace(self):
+        return self.projPath.split('/')[7]
 
     @property
     def filename(self):
@@ -218,7 +224,7 @@ class PathInfo(object):
         if relativePath:
             projRoot = '$%s' % (root)
 
-        return '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, self.step, self.workspaceDir(root))
+        return '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, self.step, self.activeApp, self.workspaceDir(root))
 
     def stepPath(self, root='RFPROJECT', relativePath=False):
         projRoot = os.environ.get(root, '')
