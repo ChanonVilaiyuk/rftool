@@ -22,19 +22,19 @@ class MainGroup(object):
 
 
 		if assetName:
-			self.Asset_Grp.name = '%s%s_Grp' % (assetName[0].upper(), assetName[1:])
+			self.Asset_Grp.name = '%s%s_grp' % (assetName[0], assetName[1:])
 		else:
-			self.Asset_Grp.name = 'Asset_Grp'
+			self.Asset_Grp.name = 'asset_grp'
 
-		self.Still_Grp.name = 'Still_Grp'
-		self.Ctrl_Grp.name = 'Ctrl_Grp'
-		self.Jnt_Grp.name = 'Jnt_Grp'
-		self.Skin_Grp.name = 'Skin_Grp'
-		self.Ikh_Grp.name = 'Ikh_Grp'
-		self.Geo_Grp.name = 'Geo_Grp'
-		self.Geo_Md.name = 'Md_Geo_Grp'
-		self.Geo_Hi.name = 'Hi_Geo_Grp'
-		self.Geo_Lo.name = 'Lo_Geo_Grp'
+		self.Still_Grp.name = 'still_grp'
+		self.Ctrl_Grp.name = 'ctrl_grp'
+		self.Jnt_Grp.name = 'jnt_grp'
+		self.Skin_Grp.name = 'skin_grp'
+		self.Ikh_Grp.name = 'ikh_grp'
+		self.Geo_Grp.name = 'geo_grp'
+		self.Geo_Md.name = 'md_geo_grp'
+		self.Geo_Hi.name = 'hi_geo_grp'
+		self.Geo_Lo.name = 'lo_geo_grp'
 
 
 		self.Asset_Grp.lockHideAttrs('tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'sx', 'sy', 'sz')
@@ -47,7 +47,7 @@ class MainGroup(object):
 
 		# Place_Ctrl
 		self.Place_Ctrl = lpc.Control('crossArrow')
-		self.Place_Ctrl.name = 'Place_Ctrl'
+		self.Place_Ctrl.name = 'placement_ctrl'
 		self.Place_Ctrl.color = 'yellow'
 		self.Place_Ctrl.attr('sy') >> self.Place_Ctrl.attr('sx')
 		self.Place_Ctrl.attr('sy') >> self.Place_Ctrl.attr('sz')
@@ -55,7 +55,7 @@ class MainGroup(object):
 
 		# Offset_Ctrl
 		self.Offset_Ctrl = lpc.Control('circle')
-		self.Offset_Ctrl.name = 'Offset_Ctrl'
+		self.Offset_Ctrl.name = 'offset_ctrl'
 		self.Offset_Ctrl.color = 'yellow'
 		self.Offset_Ctrl.lockHideAttrs('v', 'sx', 'sy', 'sz')
 
