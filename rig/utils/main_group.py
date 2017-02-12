@@ -19,6 +19,7 @@ class MainGroup(object):
 		self.Geo_Md = lpc.Null()
 		self.Geo_Lo = lpc.Null()
 		self.Geo_Hi = lpc.Null()
+		self.Geo_Pr = lpc.Null()
 
 
 		if assetName:
@@ -35,6 +36,7 @@ class MainGroup(object):
 		self.Geo_Md.name = 'md_geo_grp'
 		self.Geo_Hi.name = 'hi_geo_grp'
 		self.Geo_Lo.name = 'lo_geo_grp'
+		self.Geo_Pr.name = 'pr_geo_grp'
 
 
 		self.Asset_Grp.lockHideAttrs('tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'sx', 'sy', 'sz')
@@ -60,20 +62,21 @@ class MainGroup(object):
 		self.Offset_Ctrl.lockHideAttrs('v', 'sx', 'sy', 'sz')
 
 		# Parenting
+		self.Geo_Grp.parent(self.Asset_Grp)
 		self.Place_Ctrl.parent(self.Asset_Grp)
 		self.Still_Grp.parent(self.Asset_Grp)
-		self.Geo_Grp.parent(self.Asset_Grp)
 
 		self.Offset_Ctrl.parent(self.Place_Ctrl)
 
 		self.Ctrl_Grp.parent(self.Offset_Ctrl)
-		self.Jnt_Grp.parent(self.Offset_Ctrl)
 		self.Skin_Grp.parent(self.Offset_Ctrl)
+		self.Jnt_Grp.parent(self.Offset_Ctrl)
 		self.Ikh_Grp.parent(self.Offset_Ctrl)
 
 		self.Geo_Md.parent(self.Geo_Grp)
 		self.Geo_Hi.parent(self.Geo_Grp)
 		self.Geo_Lo.parent(self.Geo_Grp)
+		self.Geo_Pr.parent(self.Geo_Grp)
 
 		# constraint
 		mc.parentConstraint(self.Offset_Ctrl, self.Geo_Grp, mo=True)
