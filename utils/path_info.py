@@ -54,7 +54,6 @@ class PathInfo(object):
         pathElems.append((entity.get('entitySub2', 'none')))
         pathElems.append((entity.get('name', 'none')))
         pathElems.append((entity.get('step', 'none')))
-        self.task = entity.get('task', 'none')
 
         logger.debug('Object were construct with %s' % self.path)
         return ('/').join(pathElems)
@@ -148,6 +147,17 @@ class PathInfo(object):
     @property
     def filename(self):
         return os.path.basename(self.path)
+
+    @property
+    def taskName(self):
+        versionKey = '_v'
+        if versionKey in self.filename:
+            task = self.filename.split(versionKey)[0].replace('%s_' % self.name, '')
+        else:
+            task = self.filename.split('.')[0].replace('%s_' % self.name, '')
+
+        self.task = task
+        return task
 
     @property
     def versionName(self):

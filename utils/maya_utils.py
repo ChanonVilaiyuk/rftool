@@ -32,15 +32,19 @@ def setup_scene_viewport_playblast():
     mc.setAttr("defaultResolution.width",1024)
     mc.setAttr("defaultResolution.height",1024)
 
-def playblast_capture_1k(image_path):
+def playblast_capture_1k(image_path, atFrame=None):
     file_extention = image_path.split('.')[-1]
     index = int(image_path.split('.')[-2])
     image_no_extention = image_path.split('.')[0]
+    print image_no_extention
+
+    if not atFrame:
+        atFrame = index
 
     result = mc.playblast(format='image',
                     filename=image_no_extention,
-                    st=index,
-                    et=index,
+                    st=atFrame,
+                    et=atFrame,
                     sequenceTime=0,
                     clearCache=1,
                     viewer=0,
@@ -52,9 +56,20 @@ def playblast_capture_1k(image_path):
                     widthHeight=[1024,1024])
 
     if result:
-        result = result.replace('####',image_path.split('.')[-2])
+        print 'result', result
+        # result = result.replace('####',image_path.split('.')[-2])
+        targetFile = result.replace('####',image_path.split('.')[-2]).replace('\\', '/')
+        tmpFile = result.replace('####',atFrame).replace('\\', '/')
+        print atFrame
+        print tmpFile
+        print targetFile
 
-    return result
+        if os.path.exists(tmpFile):
+            os.rename(tmpFile, targetFile)
+
+        print 'result', result
+
+        return targetFile
 
 def playblast_avi(mov_path,start,end,resolution,width=960,height=540):
     # playblast  -fmt "avi" -startTime 301 -endTime 325 -sequenceTime 1 -forceOverwrite -filename "movies/s0030.avi" -clearCache 1 -showOrnaments 0 -percent 100 -wh 1024 778 -offScreen -viewer 0 -useTraxSounds -compression "none" -quality 70;

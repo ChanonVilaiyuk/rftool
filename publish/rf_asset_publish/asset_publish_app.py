@@ -18,7 +18,7 @@ import maya.mel as mm
 from functools import partial
 
 #import rftool commands
-# from rftool import publish 
+# from rftool import publish
 from rftool.utils import file_utils
 from rftool.utils import path_info
 from rftool.utils import maya_utils
@@ -83,13 +83,13 @@ class AssetPublish(QtGui.QMainWindow):
             self.src_pub_path = self.asset.entityPath(root='RFPUBL') + '/srcPublish/' + self.version_name
             # self.pub_path = self.asset.entityPath(root='RFPUBL') + '/srcPublish/' + self.version_name
             self.prod_dir = self.asset.entityPath(root='RFPROD')
-            self.image_prod = self.asset.entityPath(root='RFPROD') + '/images/' + self.version_name
-            self.image_publ = self.asset.entityPath(root='RFPUBL') + '/images/' + self.version_name
+            self.image_prod = self.asset.entityPath(root='RFPROD') + '/images/' + self.department + '/' + self.version_name
+            self.image_publ = self.asset.entityPath(root='RFPUBL') + '/images/' + self.department + '/' + self.version_name
             self.image_path_no_ext = self.image_prod + '/' + self.version_name
 
-            self.movie_prod = self.asset.entityPath(root='RFPROD') + '/movies/' + self.version_name
-            self.movie_publ = self.asset.entityPath(root='RFPUBL') + '/movies/' + self.version_name
-            
+            self.movie_prod = self.asset.entityPath(root='RFPROD') + '/movies/' + self.department + '/' + self.version_name
+            self.movie_publ = self.asset.entityPath(root='RFPUBL') + '/movies/' + self.department + '/' + self.version_name
+
             self.thumbnail = ''
             self.movie = ''
 
@@ -144,7 +144,7 @@ class AssetPublish(QtGui.QMainWindow):
                 if '.jpg' in media_list[-1]:
                     self.thumbnail = self.image_prod + '/' + media_list[-1]
                     self.set_thumbnail()
-                
+
     def get_sg_data(self):
         self.sg_asset = sg_process.get_one_asset(self.project,self.asset_name)
         self.sg_tasks = sg_process.get_tasks_by_step(self.sg_asset,self.department)
@@ -171,8 +171,9 @@ class AssetPublish(QtGui.QMainWindow):
     def screen_capture(self):
         image_path = file_utils.find_next_image_path('%s.jpg' %(self.image_path_no_ext))
         maya_utils.setup_asset_viewport_capture()
-        self.thumbnail = maya_utils.playblast_capture_1k(image_path)
-        # print self.thumbnail
+        atFrame = '%04d' % mc.currentTime(q=True)
+        self.thumbnail = maya_utils.playblast_capture_1k(image_path, atFrame=atFrame)
+        print self.thumbnail
 
         if self.thumbnail:
             self.set_thumbnail()
@@ -193,7 +194,8 @@ class AssetPublish(QtGui.QMainWindow):
 
         self.trace('Copying Movie to Server')
         file_utils.copy(fileName[0], self.movie)
-        
+        self.trace('Ready')
+
         self.set_movie()
 
     # def create_turntable(self):
@@ -219,7 +221,7 @@ class AssetPublish(QtGui.QMainWindow):
         return res
 
     def get_email(self):
-        
+
         self.send_email = ''
 
         if self.ui.model_checkBox.isChecked():
@@ -230,7 +232,7 @@ class AssetPublish(QtGui.QMainWindow):
             self.send_email = self.email_name['texture']
         if self.ui.shade_checkBox.isChecked():
             self.send_email = self.email_name['shade']
-        
+
 
     def get_message(self):
         self.message = str(self.ui.message_plainTextEdit.toPlainText())
@@ -260,26 +262,26 @@ class AssetPublish(QtGui.QMainWindow):
         version_status = 'rev'
         task_status = 'rev'
         resolution = self.check_task_resolution()
-        
+
         self.get_message()
 
         if self.thumbnail:
-            
+
             for res in resolution:
                 version_res = '_'.join([self.asset_name,self.department,res,self.version])
                 task_res = '_'.join([self.department,res])
-                
+
                 task_ent = [ n for n in self.sg_tasks if task_res == n['content'] ]
 
                 self.trace('Create \"%s\" Version on Shotgun' %(version_res))
                 pub_utils.create_sg_version(self.project, self.sg_asset, version_res, task_ent[0], version_status ,self.thumbnail, self.message, self.movie)
-            
+
             increment = pub_utils.create_increment_work_file(self.this_path)
             self.trace('Increment File to %s' %(increment.split('/')[-1]))
 
             self.trace('Update \"Pending for Review\" Status on Shotgun')
             pub_utils.set_sg_status(self.sg_tasks,'rev')
-            
+
             self.trace('Submit Completed!!')
             QtGui.QMessageBox.information(self, 'Information', 'Submit Completed!!')
 
@@ -296,7 +298,7 @@ class AssetPublish(QtGui.QMainWindow):
         version_status = 'apr'
         task_status = 'fin'
         resolution = self.check_task_resolution()
-        
+
         self.get_message()
 
         try:
@@ -310,13 +312,13 @@ class AssetPublish(QtGui.QMainWindow):
                 heropub = pub_utils.copy_asset_hero(self.this_path, self.department, res)
                 self.trace('Update \"%s\" Version' %(version_res))
                 sgpub = pub_utils.set_sg_version(version_res,version_status)
-                
+
             self.trace('Copy Media to Publish Folder')
             if self.thumbnail:
                 pub_utils.copy_media_version(self.image_prod,self.image_publ,self.version_name)
             if self.movie:
                 pub_utils.copy_media_version(self.movie_prod,self.movie_publ,self.version_name)
-            
+
             self.trace('Update \"Final\" Status on Shotgun')
             pub_utils.set_sg_status(self.sg_tasks,'fin')
 
