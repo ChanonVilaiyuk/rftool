@@ -27,6 +27,7 @@ class PathInfo(object):
             self.activeApp = 'maya'
         self.path = path
         self.input = 'path'
+        self.task = ''
 
         # construct path
         if kwarg:
@@ -43,8 +44,8 @@ class PathInfo(object):
         return self.path
 
     def construct_path(self, entity):
-        ''' entity expect {'project': 'project', 'entity'='asset', entitySub1='character', entitySub2='main', name='aiya', step=model}'''
-        ''' entity expect {'project': 'project', 'entity'='scene', entitySub1='ep1', entitySub2='q0010', name='s0010', step=model}'''
+        ''' entity expect {'project': 'project', 'entity'='asset', entitySub1='character', entitySub2='main', name='aiya', step=model, task='model_md'}'''
+        ''' entity expect {'project': 'project', 'entity'='scene', entitySub1='ep1', entitySub2='q0010', name='s0010', step=model, task='model_md'}'''
         pathElems = []
         pathElems.append(self.root)
         pathElems.append((entity.get('project', 'none')))
@@ -53,6 +54,7 @@ class PathInfo(object):
         pathElems.append((entity.get('entitySub2', 'none')))
         pathElems.append((entity.get('name', 'none')))
         pathElems.append((entity.get('step', 'none')))
+        self.task = entity.get('task', 'none')
 
         logger.debug('Object were construct with %s' % self.path)
         return ('/').join(pathElems)

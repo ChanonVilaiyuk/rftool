@@ -238,7 +238,7 @@ def create_rig_grp(objs=None, res='md', ctrl=True):
     if not objs:
         objs = mc.ls(sl=True)
 
-    rigGrp = main_group.MainGroup('Rig')
+    rigGrp = main_group.MainGroup('rig')
 
     if not ctrl:
         mc.delete(rigGrp.Place_Ctrl)
@@ -250,6 +250,8 @@ def create_rig_grp(objs=None, res='md', ctrl=True):
             mc.parent(objs, rigGrp.Geo_Hi)
         if res == 'lo':
             mc.parent(objs, rigGrp.Geo_Lo)
+        if res == 'pr':
+            mc.parent(objs, rigGrp.Geo_Pr)
 
     return rigGrp
 
