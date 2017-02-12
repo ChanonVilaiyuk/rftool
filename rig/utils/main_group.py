@@ -27,7 +27,7 @@ class MainGroup(object):
 			self.Asset_Grp.name = 'asset_grp'
 
 		self.Still_Grp.name = 'still_grp'
-		self.Ctrl_Grp.name = 'ctrl_grp'
+		self.Ctrl_Grp.name = 'anim_grp'
 		self.Jnt_Grp.name = 'jnt_grp'
 		self.Skin_Grp.name = 'skin_grp'
 		self.Ikh_Grp.name = 'ikh_grp'
@@ -47,7 +47,7 @@ class MainGroup(object):
 
 		# Place_Ctrl
 		self.Place_Ctrl = lpc.Control('crossArrow')
-		self.Place_Ctrl.name = 'placement_ctrl'
+		self.Place_Ctrl.name = 'master_ctrl'
 		self.Place_Ctrl.color = 'yellow'
 		self.Place_Ctrl.attr('sy') >> self.Place_Ctrl.attr('sx')
 		self.Place_Ctrl.attr('sy') >> self.Place_Ctrl.attr('sz')
@@ -55,7 +55,7 @@ class MainGroup(object):
 
 		# Offset_Ctrl
 		self.Offset_Ctrl = lpc.Control('circle')
-		self.Offset_Ctrl.name = 'offset_ctrl'
+		self.Offset_Ctrl.name = 'placement_ctrl'
 		self.Offset_Ctrl.color = 'yellow'
 		self.Offset_Ctrl.lockHideAttrs('v', 'sx', 'sy', 'sz')
 
