@@ -127,6 +127,15 @@ class RFStillPublish(QtGui.QMainWindow):
         self.stepWidget = pipeline_widget.StepWidget(pathInfo=self.pathInfo)
         self.stepWidget.list_steps()
 
+        # instance snap widget
+        self.ui.publish_listWidget.setVisible(False)
+        self.snapWidget = pipeline_widget.SnapImageWidget(formats=self.imageFormat, parent=self)
+
+        # instance source widget
+        self.ui.source_lineEdit.setVisible(False)
+        self.sourceFileWidget = pipeline_widget.SetUrlWidget(self)
+
+
         # parent in ui
         self.ui.gridLayout.addWidget(self.taskWidget, 0, 1)
         self.ui.gridLayout.addWidget(self.statusWidget, 1, 1)
@@ -137,6 +146,8 @@ class RFStillPublish(QtGui.QMainWindow):
         self.ui.department_horizontalLayout.addWidget(self.stepWidget)
         self.ui.department_horizontalLayout.setStretch(0, 1)
         self.ui.department_horizontalLayout.setStretch(1, 2)
+        self.ui.snap_verticalLayout.addWidget(self.snapWidget)
+        self.ui.horizontalLayout_3.addWidget(self.sourceFileWidget)
 
         # set drag drop events
         self.ui.publish_listWidget.setAcceptDrops(True)
@@ -173,6 +184,12 @@ class RFStillPublish(QtGui.QMainWindow):
         self.ui.asset_radioButton.clicked.connect(partial(self.mode_change, 'Asset'))
         self.ui.scene_radioButton.clicked.connect(partial(self.mode_change, 'Shot'))
 
+        # snapWidget
+        self.snapWidget.itemClicked.connect(lambda x: self.set_preview(x, 600, 400))
+
+        # source publish
+        self.sourceFileWidget.textChanged.connect(lambda x: self.set_preview(x, 600, 400))
+
         # preview picture
         self.ui.publish_listWidget.itemSelectionChanged.connect(self.preview)
         logger.debug('init signals done')
@@ -203,7 +220,7 @@ class RFStillPublish(QtGui.QMainWindow):
 
 
         if project and entity:
-            self.taskWidget.set_task_status(self.entity_mode, project, entity, step=step)
+            self.taskWidget.set_task_status(self.entity_mode, project, entity, step=step, setBlank=True)
             logger.info('set task done')
 
     def set_preview(self, filename, w, h):

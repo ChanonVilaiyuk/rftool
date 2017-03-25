@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:/Users/TA/Dropbox/script_server/core/maya/rftool/publish/rf_still_publish/ui.ui'
 #
-# Created: Mon Mar 20 01:10:20 2017
+# Created: Sat Mar 25 22:46:12 2017
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -35,9 +35,6 @@ class Ui_StillPublishUI(object):
         self.publish_pushButton.setMinimumSize(QtCore.QSize(0, 40))
         self.publish_pushButton.setObjectName("publish_pushButton")
         self.gridLayout_7.addWidget(self.publish_pushButton, 9, 0, 2, 1)
-        self.publish_listWidget = QtGui.QListWidget(self.centralwidget)
-        self.publish_listWidget.setObjectName("publish_listWidget")
-        self.gridLayout_7.addWidget(self.publish_listWidget, 6, 0, 1, 1)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.design_radioButton = QtGui.QRadioButton(self.centralwidget)
@@ -148,6 +145,12 @@ class Ui_StillPublishUI(object):
         self.line_3.setFrameShadow(QtGui.QFrame.Sunken)
         self.line_3.setObjectName("line_3")
         self.gridLayout_7.addWidget(self.line_3, 2, 0, 1, 1)
+        self.snap_verticalLayout = QtGui.QVBoxLayout()
+        self.snap_verticalLayout.setObjectName("snap_verticalLayout")
+        self.publish_listWidget = QtGui.QListWidget(self.centralwidget)
+        self.publish_listWidget.setObjectName("publish_listWidget")
+        self.snap_verticalLayout.addWidget(self.publish_listWidget)
+        self.gridLayout_7.addLayout(self.snap_verticalLayout, 6, 0, 1, 1)
         self.gridLayout_7.setColumnStretch(0, 1)
         self.gridLayout_7.setColumnStretch(1, 2)
         self.verticalLayout_4.addLayout(self.gridLayout_7)
