@@ -24,6 +24,8 @@ class PathInfo(object):
         self.activeApp = 'maya'
         if not path and isMaya:
             path = mc.file(q=True, loc=True)
+            if path == 'unknown':
+                path = str()
             self.activeApp = 'maya'
         self.path = path
         self.input = 'path'
@@ -90,6 +92,7 @@ class PathInfo(object):
             return self.path.replace('%s/' % self.rootPubl, '')
         if self.rootProd in self.path:
             return self.path.replace('%s/' % self.rootProd, '')
+        return ''
 
     @property
     def absPath(self):
@@ -114,35 +117,59 @@ class PathInfo(object):
 
     @property
     def project(self):
-        return self.projPath.split('/')[0]
+        value = str()
+        if len(self.projPath.split('/')) > 0:
+            value = self.projPath.split('/')[0]
+        return value
 
     @property
     def entity(self):
-        return self.projPath.split('/')[1]
+        value = str()
+        if len(self.projPath.split('/')) > 1:
+            value = self.projPath.split('/')[1]
+        return value
 
     @property
     def type(self):
-        return self.projPath.split('/')[2]
+        value = str()
+        if len(self.projPath.split('/')) > 2:
+            value = self.projPath.split('/')[2]
+        return value
 
     @property
     def subtype(self):
-        return self.projPath.split('/')[3]
+        value = str()
+        if len(self.projPath.split('/')) > 3:
+            value = self.projPath.split('/')[3]
+        return value
 
     @property
     def asset(self):
-        return self.projPath.split('/')[4]
+        value = str()
+        if len(self.projPath.split('/')) > 4:
+            value = self.projPath.split('/')[4]
+        return value
 
     @property
     def step(self):
-        return self.projPath.split('/')[5]
+        value = str()
+        if len(self.projPath.split('/')) > 5:
+            value = self.projPath.split('/')[5]
+        return value
 
     @property
     def application(self):
-        return self.projPath.split('/')[6]
+        value = str()
+        if len(self.projPath.split('/')) > 6:
+            value = self.projPath.split('/')[6]
+        return value
 
     @property
     def workspace(self):
-        return self.projPath.split('/')[7]
+        value = str()
+        if len(self.projPath.split('/')) > 7:
+            value = self.projPath.split('/')[7]
+        return value
 
     @property
     def filename(self):
@@ -180,15 +207,24 @@ class PathInfo(object):
 
     @property
     def episode(self):
-        return self.projPath.split('/')[2]
+        value = str()
+        if len(self.projPath.split('/')) > 2:
+            value = self.projPath.split('/')[2]
+        return value
 
     @property
     def sequence(self):
-        return self.projPath.split('/')[3]
+        value = str()
+        if len(self.projPath.split('/')) > 3:
+            value = self.projPath.split('/')[3]
+        return value
 
     @property
     def shot(self):
-        return self.projPath.split('/')[4]
+        value = str()
+        if len(self.projPath.split('/')) > 4:
+            value = self.projPath.split('/')[4]
+        return value
 
     @property
     def projectCode(self):

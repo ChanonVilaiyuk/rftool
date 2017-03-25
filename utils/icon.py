@@ -13,6 +13,8 @@ maya = '%s/icons/%s' % (iconPath, 'maya_icon.png')
 # sg
 sgWtg = '%s/icons/%s' % (iconPath, 'wtg_icon.png')
 sgAprv = '%s/icons/%s' % (iconPath, 'aprv_icon.png')
+sgPndgAprv = '%s/icons/%s' % (iconPath, 'p_aprv_icon.png')
+sgPndgPub = '%s/icons/%s' % (iconPath, 'pub_icon.png')
 sgFix = '%s/icons/%s' % (iconPath, 'fix_icon.png')
 sgHold = '%s/icons/%s' % (iconPath, 'hld_icon.png')
 sgIp = '%s/icons/%s' % (iconPath, 'ip_icon.png')

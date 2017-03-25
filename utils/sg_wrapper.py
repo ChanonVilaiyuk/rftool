@@ -4,9 +4,11 @@ import platform
 import logging
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 if os.environ.get('RFSCRIPT', False):
 	path = '%s/config' % os.environ.get('RFSCRIPT')
+	print path
 	if not path in sys.path:
 		sys.path.append(path)
 
@@ -60,3 +62,167 @@ def get_version_entity(version):
 
 def update_version_entity(entid,data):
 	return sg.update('Version',entid,data)
+
+
+class SGEntity(object):
+	"""docstring for SGEntity"""
+	def __init__(self, entityType='', project='', entityName='', filters=[], fields=['id', 'code'], entityDict=None):
+		super(SGEntity, self).__init__()
+		# cache
+		self.projectDict = dict()
+		self.taskDict = dict()
+		self.updateDict = dict()
+		self.stepDict = dict()
+		self.userDict = dict()
+
+		# default setting
+		self.projectFields = ['name', 'id', 'sg_shortcode']
+		self.assetFields = ['code', 'id', 'sg_asset_type', 'sg_subtype', 'sg_status_list']
+		self.taskFields = ['content', 'id', 'entity', 'sg_status_list', 'step', 'task_assignees']
+		self.stepFields = ['code', 'id']
+		self.userFields = ['name', 'id']
+
+		# default
+		self.entityType = entityType
+		self.project = project
+		self.entityName = entityName
+		self.filters = filters
+		self.fields = fields
+		self.entityDict = dict()
+
+		if not entityDict:
+			self.entityDict = self.get_entity()
+		else:
+			if type(entityDict) == type(dict()):
+				self.entityDict = entityDict
+			else:
+				logger.error('Input entityDict is not a valid dictionary')
+
+
+	def get_entity(self):
+		filters = []
+		fields = []
+
+		projectDict = self.get_project()
+		if projectDict:
+			filters = [['project', 'is', projectDict]]
+			if self.filters:
+				filters = filters + self.filters
+
+		if self.entityType == 'Asset':
+			filters.append(['code', 'is', self.entityName])
+
+			fields = self.assetFields
+			if self.fields:
+				fields = fields + self.fields
+
+		if self.entityType == 'Task':
+			filters.append(['content', 'is', self.entityName])
+
+			fields = self.assetFields
+			if self.fields:
+				fields = fields + self.fields
+
+		entity = sg.find(self.entityType, filters, fields)
+		if entity:
+			if len(entity) > 1:
+				logger.warning('More than 1 name for %s' % self.entityName)
+				logger.warning(str([a['id'] for a in entity]))
+			return entity[0]
+		else:
+			logger.warning('No entity name "%s" found on shotgun' % self.entityName)
+			return dict()
+
+	def get_project(self):
+		if self.projectDict:
+			return self.projectDict
+		else:
+			projectDict = sg.find_one('Project', [['name', 'is', self.project]], self.projectFields)
+			if projectDict:
+				self.projectDict = projectDict
+				return projectDict
+			else:
+				logger.warning('No project found %s' % self.project)
+
+	@property
+	def id(self):
+		if self.entityDict:
+			return self.entityDict.get('id')
+		logger.warning('No id found')
+		return 0
+
+
+	@property
+	def tasks(self):
+		if self.entityDict:
+			if self.entityDict.get('type') in ['Asset', 'Shot', 'Sequence']:
+				entityDict = self.entityDict
+
+			if self.entityDict.get('type') == 'Task':
+				entityDict = self.entityDict.get('entity')
+
+			if not self.taskDict:
+				taskDict = sg.find('Task', [['entity', 'is', entityDict]], self.taskFields)
+				if taskDict:
+					self.taskDict = taskDict
+					return taskDict
+				else:
+					logger.warning('No task found for %s' % self.entityName)
+
+			else:
+				return self.taskDict
+
+		else:
+			logger.warning('Cannot get task. No entity name "%s"' % self.entityName)
+
+	def set_update(self, updateDict, mode='w'):
+		if mode == 'w':
+			self.updateDict = updateDict
+		if mode == 'a':
+			self.updateDict.update(updateDict)
+
+	def update(self):
+		entityId = self.entityDict.get('id')
+		if entityId:
+			result = sg.update(self.entityType, entityId, self.updateDict)
+			return result
+		else:
+			logger.warning('There is no entity id for %s' % self.entityName)
+
+	def create(self, entityType, entityName):
+		if self.entityDict.get('type') in ['Asset', 'Shot', 'Sequence']:
+			updateDict = {'project': self.projectDict, 'entity': self.entityDict}
+			if entityType == 'Task':
+				updateDict.update({'content': entityName})
+			elif entityType == 'Version':
+				updateDict.update({'code': entityName})
+			else:
+				logger.warning('You cannot create "%s" with this instance type of "%s"' % (entityType, self.entityDict.get('type')))
+
+			if self.updateDict:
+				updateDict.update(self.updateDict)
+
+			result = sg.create(entityType, updateDict)
+			return result
+
+
+	def create_task(self):
+		return self.create('Task')
+
+	def steps(self, name=''):
+		if not self.stepDict:
+			self.stepDict = sg.find('Step', [], self.stepFields)
+		if not name:
+			return self.stepDict
+		else:
+			print self.stepDict
+			return [a for a in self.stepDict if a['code'] == name]
+
+	def users(self, name=''):
+		if not self.userDict:
+			self.userDict = sg.find('HumanUser', [], self.userFields)
+		if not name:
+			return self.userDict
+		else:
+			return [a for a in self.userDict if a['name'] == name]
+

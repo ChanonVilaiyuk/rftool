@@ -11,6 +11,14 @@ from rftool.utils import maya_utils
 from rftool.utils import path_info
 from rftool.utils import sg_wrapper
 from rftool.utils import ffmpeg_utils
+from startup import config
+
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+RFWORK = config.rootWork
+RFPUBL = config.rootPubl
 
 
 def copy_media_version(prod_dir='',publ_dir='',versionName=''):
@@ -55,11 +63,11 @@ def create_sg_version( project=None, entity=None, versionName=None, task=None, s
 
     prj_ent = sg_wrapper.get_project_entity(project)
 
-    data = {'project': prj_ent, 
+    data = {'project': prj_ent,
             'code': versionName,
-            'entity' : entity, 
-            'sg_task' : task, 
-            'sg_status_list': status } 
+            'entity' : entity,
+            'sg_task' : task,
+            'sg_status_list': status }
 
     # if imagepath:
     #     data['sg_path_to_frames'] = imagepath.replace('/','\\')
@@ -77,7 +85,7 @@ def create_sg_version( project=None, entity=None, versionName=None, task=None, s
 
     if movie:
         sg_wrapper.upload_movie(ver_ent,movie)
-    
+
 
 def set_sg_version(version,status):
     ver_ent = sg_wrapper.get_version_entity(version)
@@ -121,7 +129,7 @@ class model_pub(object):
         self.pre_abc = self.prod_dir  + '/cache/' + '_'.join([self.asset_name,'abc', self.resolution]) + '.abc'
         self.src_publ = self.prod_dir  + '/srcPublish/' + self.version_name + '.ma'
 
-        self.publ_dir = self.model.entityPath(root='RFPUBL') 
+        self.publ_dir = self.model.entityPath(root='RFPUBL')
         self.publ_path = self.publ_dir + '/publish/' + '_'.join([self.asset_name,self.department,self.resolution,self.version]) + '.ma'
 
         self.publ_lib = self.publ_dir + '/lib/' + '_'.join([self.asset_name,self.department,self.resolution]) + '.ma'
@@ -155,11 +163,11 @@ class model_pub(object):
         gpu_name = os.path.basename(self.pre_gpu).split('.')[0]
 
         if 'md' == self.resolution:
-            geo_grp = 'Md_Geo_Grp' 
+            geo_grp = 'Md_Geo_Grp'
         if 'lo' == self.resolution:
-            geo_grp = 'Lo_Geo_Grp' 
+            geo_grp = 'Lo_Geo_Grp'
         if 'hi' == self.resolution:
-            geo_grp = 'Hi_Geo_Grp' 
+            geo_grp = 'Hi_Geo_Grp'
 
         try:
             self.gpu_path = maya_utils.create_gpu_cache(geo_grp,gpu_dir,gpu_name)
@@ -171,11 +179,11 @@ class model_pub(object):
             os.makedirs(os.path.dirname(self.pre_abc))
 
         if 'md' == self.resolution:
-            geo_grp = '|Rig_Grp|Geo_Grp|Md_Geo_Grp' 
+            geo_grp = '|Rig_Grp|Geo_Grp|Md_Geo_Grp'
         if 'lo' == self.resolution:
-            geo_grp = '|Rig_Grp|Geo_Grp|Lo_Geo_Grp' 
+            geo_grp = '|Rig_Grp|Geo_Grp|Lo_Geo_Grp'
         if 'hi' == self.resolution:
-            geo_grp = '|Rig_Grp|Geo_Grp|Hi_Geo_Grp' 
+            geo_grp = '|Rig_Grp|Geo_Grp|Hi_Geo_Grp'
 
         self.abc_path = maya_utils.create_abc_cache(geo_grp, self.pre_abc)
 
@@ -249,3 +257,88 @@ class layout_pub(object):
         maya_utils.HUDClear()
 
         return movs,imgs,shot_chk
+
+
+
+# publish utils
+def source_publish(source, dstdir, entity, task):
+    """ publish for source file """
+    key = 'v'
+    padding = 3
+    version = 1
+    srcBasename = os.path.basename(source)
+    ext = os.path.splitext(srcBasename)[-1]
+    publishName = '%s_%s_%s%03d%s' % (entity, task, key, version, ext)
+    publishFile = '%s/%s' % (dstdir, publishName)
+    publishVersion = find_version(publishFile, key='v', padding=padding)
+
+    if publishVersion:
+        result = file_utils.copy(source, publishVersion)
+        logger.info('Publish source %s to %s successfully' % (source, publishVersion))
+        return result
+
+
+def list_files(path):
+    return [d for d in os.listdir(path) if os.path.isfile(os.path.join(path, d))]
+
+def find_version(filename, key='v', padding=3, versionType='local'):
+    """ find local / global version by input filename and version key at the end of file """
+    dirname = os.path.dirname(filename)
+    basename = os.path.basename(filename)
+    versionKey = findkey(filename, key=key, padding=padding)
+
+    files = list_files(dirname)
+
+    if versionKey and versionType == 'local':
+        # compare all files in publish dir and find highest version to increment
+        localVersions = sorted([findkey(a, key, padding, returnType='num') for a in files if os.path.basename(remove_version(filename, key, padding)) == remove_version(a, key, padding)])
+
+        # if there is any
+        if localVersions:
+            incrementVersion = localVersions[-1] + 1
+
+        # if not, just using that name
+        else:
+            if not os.path.exists(filename):
+                return filename
+
+    # global version, just look for vxxx on every files and increment from that
+    if versionKey and files and versionType == 'global':
+        globalVersions = sorted([findkey(a, key, padding, returnType='num') for a in files])
+        incrementVersion = globalVersions[-1] + 1
+
+    if incrementVersion:
+        newVersionKey = key + ('%0' + str(padding) + 'd') % incrementVersion
+        newIncrementVersion = '%s/%s' % (dirname, basename.replace(versionKey, newVersionKey))
+
+        return newIncrementVersion
+
+
+def findkey(filename, key, padding, returnType='key'):
+    basename = os.path.basename(filename)
+    elems = os.path.splitext(basename)[0].split('_')
+    versionKey = []
+
+    for elem in elems:
+        if elem[0] == key and elem[1: padding+1].isdigit():
+            versionKey.append(elem)
+
+    if len(versionKey) == 1:
+        if returnType == 'key':
+            return versionKey[0]
+
+        if returnType == 'num':
+            return int(versionKey[0].replace(key, ''))
+    else:
+        logger.warning('Invalid filename %s. More than version key in a file.' % filename)
+
+def remove_version(filename, key, padding):
+    """ remove vxxx from file name """
+    # asset_model_md_v001.ma -> asset_model_md_.ma
+    versionKey = findkey(filename, key, padding)
+
+    if versionKey:
+        output = filename.replace(versionKey, '')
+        logger.debug('removed file name %s -> %s' % (filename, output))
+        return output
+

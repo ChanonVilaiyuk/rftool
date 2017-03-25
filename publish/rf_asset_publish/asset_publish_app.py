@@ -93,15 +93,16 @@ class AssetPublish(QtGui.QMainWindow):
             self.thumbnail = ''
             self.movie = ''
 
+            self.get_sg_data()
             self.set_ui_information()
             self.get_thumbnail_version()
-            self.get_sg_data()
 
         except AttributeError as attrErr :
             print attrErr, ',', self.this_path
             QtGui.QMessageBox.warning(self, 'Warning', 'No Maya Scene Open')
 
     def init_connect(self):
+        ''' connect signals '''
         self.ui.action_add_check_up.triggered.connect(self.add_checkup_lists)
         self.ui.screen_capture_pushButton.clicked.connect(self.screen_capture)
         self.ui.upload_movie_pushButton.clicked.connect(self.upload_movie)
@@ -115,6 +116,8 @@ class AssetPublish(QtGui.QMainWindow):
         self.ui.publish_pushButton.clicked.connect(self.publish)
 
     def set_ui_information(self):
+        # hide unused
+        self.ui.res_frame.setVisible(False)
         self.email_name = { 'model': 'model@riffanimation.com', 'rig': 'rig@riffanimation.com', 'texture': 'texture@riffanimation.com', 'shade': 'shade@riffanimation.com' }
 
         self.main_styleSheet = 'QPushButton {\n    background-color: rgb(100, 200, 0);\n    border-style: inset;\n    border-width: 1px;\n    border-radius: 6px;\n    border-color: rgb(10, 90, 0);\n    font: bold 12px;\n}\nQPushButton:pressed {\n    background-color: rgb(15, 125, 15);\n}'
@@ -128,6 +131,17 @@ class AssetPublish(QtGui.QMainWindow):
         self.ui.subtype_lineEdit.setText(self.subtype_name)
         self.ui.name_lineEdit.setText(self.asset_name)
         self.ui.department_lineEdit.setText(self.department)
+        self.set_tasks_comboBox()
+
+    def set_tasks_comboBox(self):
+        activeRow = 0
+        for row, task in enumerate(sorted(self.sg_tasks)):
+            self.ui.task_comboBox.addItem(task.get('content'))
+            self.ui.task_comboBox.setItemData(row, task, QtCore.Qt.UserRole)
+            if self.asset.taskName == task.get('content'):
+                activeRow = row
+
+        self.ui.task_comboBox.setCurrentIndex(activeRow)
 
     def get_thumbnail_version(self):
         if os.path.exists(self.image_prod):
@@ -250,7 +264,8 @@ class AssetPublish(QtGui.QMainWindow):
             self.ui.publish_pushButton.setEnabled(False)
 
         else:
-            self.trace('No duplicate name exists.')
+            # self.trace('No duplicate name exists.')
+            self.trace('Check OK.')
             self.ui.publish_pushButton.setStyleSheet(self.main_styleSheet)
             self.ui.publish_pushButton.setEnabled(True)
 
@@ -266,21 +281,25 @@ class AssetPublish(QtGui.QMainWindow):
         self.get_message()
 
         if self.thumbnail:
+            task_ent = [self.ui.task_comboBox.itemData(self.ui.task_comboBox.currentIndex(), QtCore.Qt.UserRole)]
+            version_res = self.version_name
 
-            for res in resolution:
-                version_res = '_'.join([self.asset_name,self.department,res,self.version])
-                task_res = '_'.join([self.department,res])
+            # for res in resolution:
+            #     version_res = '_'.join([self.asset_name,self.department,res,self.version])
+            #     task_res = '_'.join([self.department,res])
 
-                task_ent = [ n for n in self.sg_tasks if task_res == n['content'] ]
+            #     task_ent = [ n for n in self.sg_tasks if task_res == n['content'] ]
 
-                self.trace('Create \"%s\" Version on Shotgun' %(version_res))
-                pub_utils.create_sg_version(self.project, self.sg_asset, version_res, task_ent[0], version_status ,self.thumbnail, self.message, self.movie)
+            #     self.trace('Create \"%s\" Version on Shotgun' %(version_res))
+            #     pub_utils.create_sg_version(self.project, self.sg_asset, version_res, task_ent[0], version_status ,self.thumbnail, self.message, self.movie)
+            self.trace('Create \"%s\" Version on Shotgun' %(version_res))
+            pub_utils.create_sg_version(self.project, self.sg_asset, version_res, task_ent[0], version_status ,self.thumbnail, self.message, self.movie)
 
             increment = pub_utils.create_increment_work_file(self.this_path)
             self.trace('Increment File to %s' %(increment.split('/')[-1]))
 
             self.trace('Update \"Pending for Review\" Status on Shotgun')
-            pub_utils.set_sg_status(self.sg_tasks,'rev')
+            pub_utils.set_sg_status(task_ent,'rev')
 
             self.trace('Submit Completed!!')
             QtGui.QMessageBox.information(self, 'Information', 'Submit Completed!!')

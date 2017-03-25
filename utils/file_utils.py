@@ -48,7 +48,9 @@ def copy(src, dst) :
             os.makedirs(dstDir)
 
         shutil.copy2(src, dst)
-    return dst
+
+    if os.path.exists(dst):
+        return dst
 
 def remove(file):
     os.remove(file)

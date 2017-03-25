@@ -99,12 +99,12 @@ def get_task(entityType, userEntity, projectEntity, episodeEntity, stepEntity):
 
 def get_tasks(entity):
 	filters = [['entity', 'is', entity]]
-	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app']
+	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app', 'sg_resolution']
 	return sg.find('Task', filters, fields)
 
 def get_tasks_by_step(entity, step):
 	filters = [['entity', 'is', entity], ['step.Step.code', 'is', step]]
-	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app']
+	fields = ['content', 'id', 'project', 'sg_status_list', 'task_assignees', 'step', 'sg_app', 'sg_resolution']
 	return sg.find('Task', filters, fields)
 
 def get_one_task(entity,task):
@@ -144,6 +144,9 @@ def create_asset(project, assetType, assetSubType, assetName, episode=None, temp
 	data = dict()
 	if episode:
 		data.update({'sg_episodes': episode})
+
+	add_list_field(assetType, 'sg_asset_type')
+	add_list_field(assetSubType, 'sg_subtype')
 
 	data.update({'project': project, 'sg_asset_type': assetType, 'sg_subtype': assetSubType, 'code': assetName, 'task_template': taskTemplate})
 	return sg.create('Asset', data)
@@ -242,7 +245,7 @@ def taskFilters(entityType, userEntity, projectEntity, episodeEntity, stepEntity
 	return filters
 
 def taskFields(entityType) :
-	fields = ['content', 'entity', 'step', 'project', 'sg_status_list', 'task_assignees', 'sg_app']
+	fields = ['content', 'entity', 'step', 'project', 'sg_status_list', 'task_assignees', 'sg_app', 'sg_resolution']
 	assetFields = ['entity.Asset.code', 'entity.Asset.sg_asset_type', 'entity.Asset.sg_subtype', 'entity.Asset.scenes']
 	shotFields = ['entity.Shot.code', 'entity.Shot.sg_sequence', 'entity.Shot.sg_scene', 'entity.Shot.sg_scene']
 

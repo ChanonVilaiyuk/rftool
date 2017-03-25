@@ -281,8 +281,8 @@ def create_abc_cache(objLongName='',abcPath=''):
 
 def check_duplicate_name():
 
-    if mc.objExists('Rig_Grp'):
-        mc.select('Rig_Grp', hi=True )
+    if mc.objExists('rig_grp'):
+        mc.select('rig_grp', hi=True )
         lists = mc.ls(sl=True,type='transform')
 
         mc.select(clear=True)
