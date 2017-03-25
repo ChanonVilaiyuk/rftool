@@ -149,11 +149,6 @@ class RFStillPublish(QtGui.QMainWindow):
         self.ui.snap_verticalLayout.addWidget(self.snapWidget)
         self.ui.horizontalLayout_3.addWidget(self.sourceFileWidget)
 
-        # set drag drop events
-        self.ui.publish_listWidget.setAcceptDrops(True)
-        self.ui.source_lineEdit.installEventFilter(self)
-        self.ui.publish_listWidget.installEventFilter(self)
-
         # set progress bar
         self.ui.progressBar.setVisible(False)
         logger.debug('setting ui done')
@@ -165,7 +160,7 @@ class RFStillPublish(QtGui.QMainWindow):
         if isMaya:
             # set source input
             if self.pathInfo.path:
-                self.ui.source_lineEdit.setText(self.pathInfo.path)
+                self.sourceFileWidget.widget.setText(self.pathInfo.path)
                 self.set_mode('automatic')
                 self.projectWidget.enable(False)
                 self.stepWidget.enable(False)
@@ -187,11 +182,7 @@ class RFStillPublish(QtGui.QMainWindow):
         # snapWidget
         self.snapWidget.itemClicked.connect(lambda x: self.set_preview(x, 600, 400))
 
-        # source publish
-        self.sourceFileWidget.textChanged.connect(lambda x: self.set_preview(x, 600, 400))
-
         # preview picture
-        self.ui.publish_listWidget.itemSelectionChanged.connect(self.preview)
         logger.debug('init signals done')
 
     def init_functions(self):
@@ -224,6 +215,7 @@ class RFStillPublish(QtGui.QMainWindow):
             logger.info('set task done')
 
     def set_preview(self, filename, w, h):
+        logger.info('Preview %s at %s x %s' % (filename, w, h))
         self.ui.preview_label.setPixmap(QtGui.QPixmap(filename).scaled(w, h, QtCore.Qt.KeepAspectRatio))
 
 
@@ -236,49 +228,6 @@ class RFStillPublish(QtGui.QMainWindow):
         if self.ui.scene_radioButton.isChecked():
             return 'scene'
 
-    def eventFilter(self, source, event):
-        """Very useful func that intercept event from installed widget. Now u dont have to create custom widget class just for overriding its event anymore.
-            But u have to call installEventFilter on the widget first (check initUi func.)"""
-
-            #Move and Enter, pre-drop events which are required if u want to activate DropEvent.
-        if event.type() == QtCore.QEvent.DragMove:
-            event.accept()
-            return True
-
-        elif event.type() == QtCore.QEvent.DragEnter:
-            event.accept()
-            return True
-
-        elif event.type() == QtCore.QEvent.Drop:
-
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-            # Workaround for OSx dragging and dropping
-            op_sys = platform.system()
-            for url in event.mimeData().urls():
-                if op_sys == 'Darwin':
-                    from Foundation import NSURL
-                    fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
-                else:
-                    fname = str(url.toLocalFile())
-
-                if type(source) == QtGui.QLineEdit:
-                    source.setText(fname)
-
-                if type(source) == QtGui.QListWidget:
-                    if os.path.splitext(fname)[-1] in self.imageFormat:
-                        item = QtGui.QListWidgetItem(source)
-                        item.setData(QtCore.Qt.UserRole, fname)
-                        item.setText(os.path.basename(fname))
-                        source.setCurrentItem(item)
-
-                    else:
-                        QtGui.QMessageBox.warning(self, 'Error', 'Please drop only JPG or PNG file')
-
-            return True
-
-        return False
-
     def mode_change(self, mode):
         """ signal when mode switch changed """
         logger.debug('mode changed to -%s' % mode)
@@ -290,16 +239,6 @@ class RFStillPublish(QtGui.QMainWindow):
 
         # recall list_task again
         self.set_task()
-
-
-    def preview(self):
-        """ when click on the publish item, preview picture """
-        item = self.ui.publish_listWidget.currentItem()
-
-        if item:
-            path = item.data(QtCore.Qt.UserRole)
-            self.set_preview(path, w=600, h=400)
-            logger.debug('preview file %s' % path)
 
     def set_mode(self, mode):
         self.ui.mode_label.setAlignment(QtCore.Qt.AlignCenter);

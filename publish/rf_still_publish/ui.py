@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:/Users/TA/Dropbox/script_server/core/maya/rftool/publish/rf_still_publish/ui.ui'
 #
-# Created: Sat Mar 25 22:46:12 2017
+# Created: Sat Mar 25 23:43:01 2017
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,6 +27,9 @@ class Ui_StillPublishUI(object):
         self.source_lineEdit = QtGui.QLineEdit(self.centralwidget)
         self.source_lineEdit.setObjectName("source_lineEdit")
         self.horizontalLayout_3.addWidget(self.source_lineEdit)
+        self.sourcePublish_horizontalLayout = QtGui.QHBoxLayout()
+        self.sourcePublish_horizontalLayout.setObjectName("sourcePublish_horizontalLayout")
+        self.horizontalLayout_3.addLayout(self.sourcePublish_horizontalLayout)
         self.gridLayout_7.addLayout(self.horizontalLayout_3, 5, 0, 1, 1)
         self.logo_label = QtGui.QLabel(self.centralwidget)
         self.logo_label.setObjectName("logo_label")
