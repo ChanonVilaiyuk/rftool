@@ -4,6 +4,7 @@ from PySide import QtCore
 from PySide import QtGui
 import status_config
 from rftool.utils import sg_process
+import grab_screen
 
 class StatusWidget(QtGui.QWidget) :
     def __init__(self, parent = None) :
@@ -216,15 +217,21 @@ class DropUrlListWidget(QtGui.QListWidget):
 class SnapImageWidget(QtGui.QWidget) :
     """ department comboBox """
     itemClicked = QtCore.Signal(str)
-    def __init__(self, formats, parent=None) :
+    def __init__(self, formats, isMaya, imgDst=None, parent=None) :
         super(SnapImageWidget, self).__init__(parent)
         self.allLayout = QtGui.QVBoxLayout()
         self.widget = DropUrlListWidget()
+        self.button = QtGui.QPushButton()
         self.allLayout.addWidget(self.widget)
-        self.allLayout.setSpacing(0)
+        self.allLayout.addWidget(self.button)
+        self.allLayout.setSpacing(2)
         self.allLayout.setContentsMargins(2, 2, 2, 2)
         self.setLayout(self.allLayout)
+
         self.formats = formats
+
+        self.preCapScreen = DimScreen(isMaya=isMaya, dstDir=imgDst)
+        self.button.setText('Snap Screen')
 
         self.widget.dropped.connect(self.display)
         self.widget.itemSelectionChanged.connect(self.call_back)
@@ -248,7 +255,7 @@ class SnapImageWidget(QtGui.QWidget) :
 
 
 class DropUrlLineEdit(QtGui.QLineEdit):
-    """ subclass QListWidget for dragdrop events """
+    """ subclass QLineEdit for dragdrop events """
     dropped = QtCore.Signal(list)
     def __init__(self, parent=None):
         super(DropUrlLineEdit, self).__init__(parent)
@@ -278,11 +285,11 @@ class DropUrlLineEdit(QtGui.QLineEdit):
         else:
             event.ignore()
 
-class SetUrlWidget(QtGui.QWidget) :
-    """ department comboBox """
+class DropPathWidget(QtGui.QWidget) :
+    """ lineEdit drag drop Widget """
     textChanged = QtCore.Signal(str)
     def __init__(self, parent=None) :
-        super(SetUrlWidget, self).__init__(parent)
+        super(DropPathWidget, self).__init__(parent)
         self.allLayout = QtGui.QVBoxLayout()
         self.widget = DropUrlLineEdit()
         self.allLayout.addWidget(self.widget)
@@ -298,3 +305,90 @@ class SetUrlWidget(QtGui.QWidget) :
         self.textChanged.emit(urls[0])
 
 
+class DimScreen(QtGui.QSplashScreen):
+    """ snap screen shot with rubber band """
+    """ darken the screen by making splashScreen """
+    # app = QtGui.QApplication.instance() -> for maya
+    # app = QtGui.QApplication(sys.argv) -> for standalone
+
+    def __init__(self, isMaya, dstDir=None, filename=None, ext='png'):
+        """"""
+        if isMaya:
+            app = QtGui.QApplication.instance()
+        else:
+            app = QtGui.QApplication(sys.argv)
+
+        screenGeo = app.desktop().screenGeometry()
+        width = screenGeo.width()
+        height = screenGeo.height()
+        fillPix = QtGui.QPixmap(width, height)
+        fillPix.fill(QtGui.QColor(1,1,1))
+
+        super(DimScreen, self).__init__(fillPix)
+        self.havePressed = False
+        self.origin = QtCore.QPoint(0,0)
+        self.end = QtCore.QPoint(0,0)
+        self.rubberBand = None
+
+
+        self.setWindowState(QtCore.Qt.WindowFullScreen)
+        #self.setBackgroundRole(QtGui.QPalette.Dark)
+        self.setWindowOpacity(0.4)
+
+        self.dstDir = self.setImgDst(dstDir)
+        self.filename = filename
+        self.ext = ext
+
+
+
+    def mousePressEvent(self, event):
+        self.havePressed = True
+        self.origin = event.pos()
+
+        if not self.rubberBand:
+            self.rubberBand = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+        self.rubberBand.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
+        self.rubberBand.show()
+
+    def mouseMoveEvent(self, event):
+        self.rubberBand.setGeometry(QtCore.QRect(self.origin, event.pos()).normalized())
+
+    def mouseReleaseEvent(self, event):
+        self.rubberBand.hide()
+        if self.havePressed == True:
+            self.end = event.pos()
+            self.hide()
+
+            self.capture()
+
+    def capture(self):
+        outputFile = self.setOutput()
+        QPixmap.grabWindow(QApplication.desktop().winId(), self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y()).save('C:/Users/Ta/screenshot_windowed.png', 'png')
+
+
+    def setOutput(self):
+
+
+
+
+    def setImgDst(self, dstDir):
+        if not dstDir:
+            dstDir = '%s/pipelineWidgetCaptureTmp' % os.environ['TEMP']
+
+        if not os.path.exists(dstDir):
+            os.makedirs(dstDir)
+            logger.debug('Create snap dir %s' % dstDir)
+
+        return dstDir
+
+
+def listFolder(path=''):
+    """ list folder """
+    dirs = []
+    if os.path.exists(path):
+        return [d for d in os.listdir(path) if os.path.isdir(os.path.join(path,d))]
+
+
+def listFile(path=''):
+    """ list files """
+    return [d for d in os.listdir(path) if os.path.isfile(os.path.join(path, d))]
