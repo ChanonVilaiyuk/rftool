@@ -133,7 +133,7 @@ class RFStillPublish(QtGui.QMainWindow):
 
         # instance source widget
         self.ui.source_lineEdit.setVisible(False)
-        self.sourceFileWidget = pipeline_widget.SetUrlWidget(self)
+        self.sourceFileWidget = pipeline_widget.DropPathWidget(self)
 
 
         # parent in ui
