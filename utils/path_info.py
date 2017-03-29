@@ -293,8 +293,15 @@ class PathInfo(object):
 
         return '_'.join(nameEles)
 
-    def libName(self, step, res):
-        return '{0}.{1}'.format('_'.join([self.assetName(project=True), step, res]), config.refExt)
+    def libName(self, step, res, project=True):
+        elems = [(self.assetName(project=project))]
+
+        if step:
+            elems.append(step)
+        if res:
+            elems.append(res)
+
+        return '{0}.{1}'.format('_'.join(elems), config.refExt)
 
     def getRefs(self):
         if os.path.exists(self.libPath()):
