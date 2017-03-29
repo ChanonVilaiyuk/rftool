@@ -2,6 +2,8 @@ import os
 import maya.cmds as mc
 import maya.mel as mm
 
+import asm_utils
+
 for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
     if os.path.exists(path + '/AbcImport.mll'):
         if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
@@ -314,6 +316,16 @@ def create_reference(assetName, path):
     if os.path.exists(path):
         namespace = get_namespace('%s_001' % assetName)
         result = mc.file(path, r=True, ns=namespace)
+        return namespace
+
+def create_asm_reference(assetName, path):
+    if os.path.exists(path):
+        namespace = get_namespace('%s_001' % assetName)
+        arNode = asm_utils.createARNode()
+        asm_utils.setARDefinitionPath(arNode, path)
+        # asm_utils.setARNamespace(arNode, namespace)
+        mc.rename(arNode, '%s_AR' % assetName)
+
         return namespace
 
 def duplicate_reference(path):

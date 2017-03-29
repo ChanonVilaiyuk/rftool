@@ -220,3 +220,71 @@ def ymlLoader(file) :
     dictData = yaml.load(data)
 
     return dictData
+
+def search_replace_file(srcFile, search, replace, removeLine = True, backupFile = True) :
+    if backupFile :
+        backupSuccess = backup(srcFile)
+
+    else :
+        backupSuccess = True
+
+    if backupSuccess :
+        # open file
+        f = open(srcFile, 'r')
+        data = f.read()
+        f.close()
+
+        if removeLine :
+            replace = ''
+
+        replaceData = data.replace(search, replace)
+
+        # write back
+        f = open(srcFile, 'w')
+        f.write(replaceData)
+        f.close()
+
+        return True
+
+def search_replace_keys(srcFile, searchReplaceDict, backupFile = True) :
+    if backupFile :
+        backupSuccess = backup(srcFile)
+
+    else :
+        backupSuccess = True
+
+    if backupSuccess :
+        # open file
+        f = open(srcFile, 'r')
+        data = f.read()
+        f.close()
+
+        for search, replace in searchReplaceDict.iteritems():
+            data = data.replace(search, replace)
+
+        replaceData = data
+
+        # write back
+        f = open(srcFile, 'w')
+        f.write(replaceData)
+        f.close()
+
+        return True
+
+def backup(srcFile) :
+    backupName = '.bk'
+    srcDir = os.path.dirname(srcFile)
+    backupDir = '%s/%s' % (srcDir, backupName)
+    timeSuffix = str(datetime.now()).replace(' ', '_').split('.')[0].replace(':', '-')
+    basename = os.path.basename(srcFile)
+    ext = basename.split('.')[-1]
+    backupFile = '%s/%s_%s.%s' % (backupDir, basename, timeSuffix, ext)
+
+    # create backup dir
+    if not os.path.exists(backupDir) :
+        os.makedirs(backupDir)
+
+    # backup
+    result = backupSuccess = copy(srcFile, backupFile)
+
+    return result
