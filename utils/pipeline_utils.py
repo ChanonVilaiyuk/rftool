@@ -122,3 +122,24 @@ def repath_ad(asset):
 			logger.debug('replaceKey %s' % str(replaceDict))
 			logger.info('repath ad complete %s' % ('%s/%s' % (refPath, adFile)))
 			return file_utils.search_replace_keys('%s/%s' % (refPath, adFile), replaceDict, backupFile=False)
+
+
+def check_export(mtime, path):
+	""" check if file export success by checking time stamp """
+	if not os.path.exists(path):
+		return False
+
+	else:
+		newtime = os.path.getmtime(path)
+
+		if not newtime == mtime:
+			return True
+		else:
+			return False
+
+def check_time(path):
+	if not os.path.exists(path):
+		return 0
+	else:
+		return os.path.getmtime(path)
+

@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>435</width>
-    <height>478</height>
+    <height>503</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Scene Review Submitter &amp; Publisher v1.0</string>
+   <string>Scene Review Submitter &amp; Publisher v1.1</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -5944,12 +5944,14 @@ QPushButton:pressed {
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>40</height>
+          <height>20</height>
          </size>
         </property>
         <property name="font">
          <font>
           <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
@@ -5957,6 +5959,16 @@ QPushButton:pressed {
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>24</number>
+        </property>
+        <property name="textVisible">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

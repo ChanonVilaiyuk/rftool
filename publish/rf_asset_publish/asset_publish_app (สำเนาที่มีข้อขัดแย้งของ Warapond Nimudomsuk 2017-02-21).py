@@ -59,7 +59,7 @@ class AssetPublish(QtGui.QMainWindow):
         self.init_connect()
 
     def runUI(self):
-        loader = QtUiTools.QUiLoader()
+    	loader = QtUiTools.QUiLoader()
         file = QtCore.QFile(module_dir + "/ui.ui")
         file.open(QtCore.QFile.ReadOnly)
         self.ui = loader.load(file, self)
@@ -78,8 +78,8 @@ class AssetPublish(QtGui.QMainWindow):
             self.type_name = self.asset.type
             self.subtype_name = self.asset.subtype
             self.asset_name = self.asset.name
+            self.task_name = self.asset.taskName
             self.department = self.asset.step
-            self.task_name = self.asset.task
             # self.user_name = self.scene.user
             self.src_pub_path = self.asset.entityPath(root='RFPUBL') + '/srcPublish/' + self.version_name
             # self.pub_path = self.asset.entityPath(root='RFPUBL') + '/srcPublish/' + self.version_name
@@ -94,56 +94,51 @@ class AssetPublish(QtGui.QMainWindow):
             self.thumbnail = ''
             self.movie = ''
 
-            self.get_sg_data()
+            self.hide_progressBar()
             self.set_ui_information()
             self.get_thumbnail_version()
+            self.get_sg_data()
 
         except AttributeError as attrErr :
             print attrErr, ',', self.this_path
             QtGui.QMessageBox.warning(self, 'Warning', 'No Maya Scene Open')
 
     def init_connect(self):
-        ''' connect signals '''
         self.ui.action_add_check_up.triggered.connect(self.add_checkup_lists)
         self.ui.screen_capture_pushButton.clicked.connect(self.screen_capture)
         self.ui.upload_movie_pushButton.clicked.connect(self.upload_movie)
         self.ui.autoCheck_pushButton.clicked.connect(self.auto_check)
         self.ui.review_pushButton.clicked.connect(self.review)
 
-        # self.ui.low_checkBox.toggled.connect(self.check_res)
-        # self.ui.med_checkBox.toggled.connect(self.check_res)
-        # self.ui.high_checkBox.toggled.connect(self.check_res)
+        self.ui.low_checkBox.toggled.connect(self.check_res)
+        self.ui.med_checkBox.toggled.connect(self.check_res)
+        self.ui.high_checkBox.toggled.connect(self.check_res)
 
         self.ui.publish_pushButton.clicked.connect(self.publish)
 
     def set_ui_information(self):
-        # hide unused
-        # self.ui.res_frame.setVisible(False)
         self.email_name = { 'model': 'model@riffanimation.com', 'rig': 'rig@riffanimation.com', 'texture': 'texture@riffanimation.com', 'shade': 'shade@riffanimation.com' }
 
         self.main_styleSheet = 'QPushButton {\n    background-color: rgb(100, 200, 0);\n    border-style: inset;\n    border-width: 1px;\n    border-radius: 6px;\n    border-color: rgb(10, 90, 0);\n    font: bold 12px;\n}\nQPushButton:pressed {\n    background-color: rgb(15, 125, 15);\n}'
         self.sub_styleSheet = 'QPushButton {\n    background-color: rgb(255, 100, 0);\n    border-style: inset;\n    border-width: 1px;\n    border-radius: 6px;\n    border-color: rgb(100, 25, 0);\n    font: bold 11px;\n}\nQPushButton:pressed {\n    background-color: rgb(20, 20, 20);\n}'
         self.none_styleSheet = 'QPushButton {\n    background-color: rgb(115, 115, 115);\n    border-style: inset;\n    border-width: 1px;\n    border-radius: 6px;\n    border-color: rgb(100,25, 0);\n    font: bold 11px;\n}\nQPushButton:pressed {\n    background-color: rgb(160, 160, 160);\n}'
 
-        # self.ui.publish_pushButton.setStyleSheet(self.none_styleSheet)
-        # self.ui.publish_pushButton.setEnabled(False)
-        self.hide_progressBar()
+        self.ui.publish_pushButton.setStyleSheet(self.none_styleSheet)
+        self.ui.publish_pushButton.setEnabled(False)
         self.ui.version_lineEdit.setText(self.version_name)
         self.ui.type_lineEdit.setText(self.type_name)
         self.ui.subtype_lineEdit.setText(self.subtype_name)
         self.ui.name_lineEdit.setText(self.asset_name)
         self.ui.department_lineEdit.setText(self.department)
-        self.set_tasks_comboBox()
 
-    def set_tasks_comboBox(self):
-        activeRow = 0
-        for row, task in enumerate(sorted(self.sg_tasks)):
-            self.ui.task_comboBox.addItem(task.get('content'))
-            self.ui.task_comboBox.setItemData(row, task, QtCore.Qt.UserRole)
-            if self.task_name == task.get('content'):
-                activeRow = row
-
-        self.ui.task_comboBox.setCurrentIndex(activeRow)
+        if 'pr' in self.task_name:
+            self.ui.proxy_checkBox.setChecked(True)
+        if 'lo' in self.task_name:
+            self.ui.low_checkBox.setChecked(True)
+        if 'md' in self.task_name:
+            self.ui.med_checkBox.setChecked(True)
+        if 'hi' in self.task_name:
+            self.ui.high_checkBox.setChecked(True)
 
     def get_thumbnail_version(self):
         if os.path.exists(self.image_prod):
@@ -162,15 +157,20 @@ class AssetPublish(QtGui.QMainWindow):
                     self.set_thumbnail()
 
     def get_sg_data(self):
-        task = str(self.ui.task_comboBox.currentText())
-
         self.sg_asset = sg_process.get_one_asset(self.project,self.asset_name)
         self.sg_tasks = sg_process.get_tasks_by_step(self.sg_asset,self.department)
-        self.sg_task  = sg_process.get_tasks_by_step(self.sg_asset,task)
 
-        if self.sg_task:
+        for task in self.sg_tasks:
+            if 'pr' in task['content'].lower():
+                self.ui.proxy_checkBox.setEnabled(True)
+            if 'lo' in task['content'].lower():
+                self.ui.low_checkBox.setEnabled(True)
+            if 'md' in task['content'].lower():
+                self.ui.med_checkBox.setEnabled(True)
+            if 'hi' in task['content'].lower():
+                self.ui.high_checkBox.setEnabled(True)
 
-            if self.sg_task['sg_status_list'] == 'pub':
+            if task['content'] == self.task_name and task['sg_status_list'] == 'apr':
                 self.trace('Ready for Publish')
                 self.ui.publish_pushButton.setStyleSheet(self.main_styleSheet)
                 self.ui.publish_pushButton.setEnabled(True)
@@ -221,6 +221,11 @@ class AssetPublish(QtGui.QMainWindow):
         self.set_movie()
         self.hide_progressBar()
         self.trace('Ready')
+        
+
+    # def create_turntable(self):
+    #     self.turntable = ''
+    #     pass
 
     def check_res(self):
         if not self.ui.low_checkBox.isChecked() and not self.ui.med_checkBox.isChecked() and not self.ui.high_checkBox.isChecked() :
@@ -256,8 +261,12 @@ class AssetPublish(QtGui.QMainWindow):
 
     def get_message(self):
         self.message = str(self.ui.message_plainTextEdit.toPlainText())
+        # print self.message
 
     def auto_check(self):
+        # check_module = 'check_' + self.department
+        # # all_functions = inspect.getmembers(check_module, inspect.isfunction)
+
         chk_dup = maya_utils.check_duplicate_name()
 
         if not chk_dup:
@@ -266,7 +275,7 @@ class AssetPublish(QtGui.QMainWindow):
             self.ui.publish_pushButton.setEnabled(False)
 
         else:
-            self.trace('Check OK.')
+            self.trace('No duplicate name exists.')
             self.ui.publish_pushButton.setStyleSheet(self.main_styleSheet)
             self.ui.publish_pushButton.setEnabled(True)
 
@@ -276,7 +285,9 @@ class AssetPublish(QtGui.QMainWindow):
         QtGui.QApplication.processEvents()
 
     def cal_percentage(self,full,fraction,point):
+        # all float variables
         return point*(fraction/full)
+
 
     def show_progressBar(self):
         self.ui.progressBar.setVisible(True)
@@ -287,9 +298,7 @@ class AssetPublish(QtGui.QMainWindow):
     def review(self):
         version_status = 'rev'
         task_status = 'rev'
-
-        task = str(self.ui.task_comboBox.currentText())
-        self.sg_task = sg_process.get_tasks_by_step(self.sg_asset,task)
+        resolution = self.check_task_resolution()
 
         self.get_message()
 
@@ -299,17 +308,30 @@ class AssetPublish(QtGui.QMainWindow):
             i = 0
             j = 0
 
-            task_ent = self.ui.task_comboBox.itemData(self.ui.task_comboBox.currentIndex(), QtCore.Qt.UserRole)
-            self.version_name = self.version_name
+            for res in resolution:
+                i += 1
+                percentage  = self.cal_percentage(float(len(resolution)),float(i),60.0)
+                version_res = '_'.join([self.asset_name,self.department,res,self.version])
+                task_res    = '_'.join([self.department,res])
 
-            self.trace('Create \"%s\" Version on Shotgun' %(self.version_name),25.0)
-            pub_utils.create_sg_version(self.project, self.sg_asset, self.version_name, task_ent, version_status ,self.thumbnail, self.message, self.movie)
+                task_ent = [ n for n in self.sg_tasks if task_res == n['content'] ]
 
-            self.trace('Update \"Pending for Review\" Status on Shotgun',75.0)
-            pub_utils.set_sg_status([task_ent],'rev')
+                pub_utils.create_sg_version(self.project, self.sg_asset, version_res, task_ent[0], version_status ,self.thumbnail, self.message, self.movie)
+                self.trace('Create \"%s\" Version on Shotgun' %(version_res), percentage)
 
-            self.trace('Submit Completed!!',100.0)
+            increment = pub_utils.create_increment_work_file(self.this_path)
+            self.trace('Increment File to %s' %(increment.split('/')[-1]), 75.0)
+
+            for task in self.sg_tasks:
+                j += 0
+                percentage  = self.cal_percentage(float(len(self.sg_tasks)),float(j),25.0) + 75.0 
+                
+                pub_utils.set_sg_status([task],'rev')
+                self.trace('Update \"Pending for Review\" Status on Shotgun',percentage)
+
             self.hide_progressBar()
+            self.trace('Submit Completed!!')
+            
             QtGui.QMessageBox.information(self, 'Information', 'Submit Completed!!')
 
         if not self.thumbnail:
@@ -324,120 +346,68 @@ class AssetPublish(QtGui.QMainWindow):
         sgpub = None
 
         version_status = 'apr'
-        task_status = 'apr'
+        task_status = 'fin'
+        resolution = self.check_task_resolution()
 
         self.get_message()
 
         try:
-            sg_version = pub_utils.check_sg_version(self.version_name)
+            self.show_progressBar()
+            i = 0
+            j = 0
 
-            if sg_version:
-                self.show_progressBar()
-                i = 0
-                j = 0
+            for res in resolution:
+                version_res = '_'.join([self.asset_name,self.department,res,self.version])
 
-                prepub = pub_utils.create_asset_pre_publish(self.this_path, self.department, self.task_name)
-                self.trace('Export Resource Files',15.0)
+                i += 1
+                percentage  = self.cal_percentage(float(len(resolution)*3),float(i),60.0)
 
-                sgpub = pub_utils.set_sg_version(sg_version,version_status)
-                self.trace('Update \"%s\" Version' %(self.version_name),25.0)
+                self.trace('Export Resource Files',percentage)
+                prepub = pub_utils.create_asset_pre_publish(self.this_path, self.department, res)
+
+                i += 1
+                percentage  = self.cal_percentage(float(len(resolution)*3),float(i),60.0)
+                self.trace('Copy Resource Files to \"lib\"',percentage)
+                heropub = pub_utils.copy_asset_hero(self.this_path, self.department, res)
+
+                i += 1
+                percentage  = self.cal_percentage(float(len(resolution)*3),float(i),60.0)
+                self.trace('Update \"%s\" Version' %(version_res),percentage)
+                sgpub = pub_utils.set_sg_version(version_res,version_status)
+
+            
+
+            if self.thumbnail:
+                pub_utils.copy_media_version(self.image_prod,self.image_publ,self.version_name)
+                self.trace('Copy Media to Publish Folder',65.0)
+            if self.movie:
+                pub_utils.copy_media_version(self.movie_prod,self.movie_publ,self.version_name)
+                self.trace('Copy Media to Publish Folder',70.0)
+
+            for task in self.sg_tasks:
+                j += 1
+                percentage  = self.cal_percentage(float(len(self.sg_tasks)),float(i),30.0) + 70.0
                 
+                pub_utils.set_sg_status(self.sg_tasks,'fin')
+                self.trace('Update \"Final\" Status on Shotgun',percentage)
 
-                if self.thumbnail:
-                    pub_utils.copy_media_version(self.image_prod,self.image_publ,self.version_name)
-                    self.trace('Copy Media to Publish Folder',30.0)
-                if self.movie:
-                    pub_utils.copy_media_version(self.movie_prod,self.movie_publ,self.version_name)
-                    self.trace('Copy Media to Publish Folder',50.0)
 
-                increment = pub_utils.create_increment_work_file(self.this_path)
-                self.trace('Increment File to %s' %(increment.split('/')[-1]),75.0)
+            self.hide_progressBar()
+            self.trace('Publish Completed!!')
+            QtGui.QMessageBox.information(self, 'Information', 'Publish Completed!!')
 
-                self.trace('Update \"Final\" Status on Shotgun',90.0)
-                pub_utils.set_sg_status(self.sg_tasks,task_status)
-
-                self.trace('Publish Completed!!',100.0)
-                self.hide_progressBar()
-                QtGui.QMessageBox.information(self, 'Information', 'Publish Completed!!')
-
-            else:
-                answer = QtGui.QMessageBox.question(self, 'Publish', 'No This Version Name Exist!, Do you want to publish now?')
-
-                if self.thumbnail:
-                    task_status = 'p_aprv'
-                    task_ent = self.ui.task_comboBox.itemData(self.ui.task_comboBox.currentIndex(), QtCore.Qt.UserRole)
-
-                    self.trace('Create \"%s\" Version on Shotgun' %(self.version_name),25.0)
-                    pub_utils.create_sg_version(self.project, self.sg_asset, self.version_name, task_ent, version_status ,self.thumbnail, self.message, self.movie)
-
-                    self.trace('Copy Media to Publish Folder',45.0)
-                    if self.thumbnail:
-                        pub_utils.copy_media_version(self.image_prod,self.image_publ,self.version_name)
-                    if self.movie:
-                        pub_utils.copy_media_version(self.movie_prod,self.movie_publ,self.version_name)
-
-                    self.trace('Increment File to %s' %(increment.split('/')[-1]), 65.0)
-                    increment = pub_utils.create_increment_work_file(self.this_path)
-
-                    self.trace('Update \"Final\" Status on Shotgun',85.0)
-                    pub_utils.set_sg_status(self.sg_tasks,task_status)
-
-                    self.trace('Publish Completed!!',100.0)
-                    QtGui.QMessageBox.information(self, 'Information', 'Publish Completed!!')
-                    self.hide_progressBar()
-
-                else:
-                    self.trace('No thumbnail Image')
-                    QtGui.QMessageBox.warning(self, 'Warning', 'No thumbnail file. Please click on \"Screen Capture\" and publish again.')
-                    self.hide_progressBar()
-                    
         except TypeError as exc:
 
-            if not sg_wrapper.get_version_entity(self.version_name):
-                QtGui.QMessageBox.information(self, 'Error', 'No \"%s\" Exists on shotgun.\nPlease match your version' %(self.version_name))
+            self.hide_progressBar()
+
+            if not sg_wrapper.get_version_entity(version_res):
+                QtGui.QMessageBox.information(self, 'Error', 'No \"%s\" Exists on shotgun.\nPlease match your version' %(version_res))
 
             else:
                 print 'TypeError : ' , exc
                 print 'Resource Files' , prepub
                 print 'Lib Hero' , heropub
                 print 'Shotgun Update' , sgpub
-                self.hide_progressBar()
+
                 QtGui.QMessageBox.information(self, 'Error', 'Please Check in Script Editor.\nTypeError : %s' %(exc))
 
-
-
-
-# class AddThumbnailVersion(QtGui.QMainWindow):
-#      """docstring for AddThumbnailVersion"""
-#     def __init__(self, parent=None):
-#         super(AddThumbnailVersion, self).__init__(parent)
-
-#         self.runUI()
-         
-#     def runUI(self):
-#         loader = QtUiTools.QUiLoader()
-#         file = QtCore.QFile(module_dir + "/add.ui")
-#         file.open(QtCore.QFile.ReadOnly)
-#         self.ui = loader.load(file, self)
-#         file.close()
-
-#         self.ui.show()
-
-#     def initConnect(self):
-
-#         self.ui.movie_lineEdit.installEventFilter()
-#         self.ui.image_lineEdit.installEventFilter()
-
-#         self.ui.ok_pushButton.clicked.connect(self.close_add)
-
-#     def eventFilter(self, source, event):
-
-#         if (event.type() == QtCore.QEvent.Drop):
-
-#             if event.mimeData().hasUrls():
-#                 input_text = str(event.mimeData().hasUrls())
-#                 source.setText(input_text)
-
-#     def closeAdd(self):
-
-#         self.close()

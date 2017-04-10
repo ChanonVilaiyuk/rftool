@@ -129,7 +129,7 @@ class RFStillPublish(QtGui.QMainWindow):
 
         # instance snap widget
         self.ui.publish_listWidget.setVisible(False)
-        self.snapWidget = pipeline_widget.SnapImageWidget(formats=self.imageFormat, parent=self)
+        self.snapWidget = pipeline_widget.SnapImageWidget(formats=self.imageFormat, isMaya=isMaya, parent=self)
 
         # instance source widget
         self.ui.source_lineEdit.setVisible(False)

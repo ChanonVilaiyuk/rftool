@@ -1,16 +1,24 @@
 import os
 import sys
-from PySide import QtCore
-from PySide import QtGui
+from Qt import QtCore
+from Qt import QtWidgets
+
+module_path = sys.modules[__name__].__file__
+module_dir  = os.path.dirname(module_path)
+
 import status_config
 from rftool.utils import sg_process
 import grab_screen
 
-class StatusWidget(QtGui.QWidget) :
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+class StatusWidget(QtWidgets.QWidget) :
     def __init__(self, parent = None) :
         super(StatusWidget, self).__init__(parent)
-        self.allLayout = QtGui.QVBoxLayout()
-        self.widget = QtGui.QComboBox()
+        self.allLayout = QtWidgets.QVBoxLayout()
+        self.widget = QtWidgets.QComboBox()
         self.allLayout.addWidget(self.widget)
         self.allLayout.setSpacing(0)
         self.allLayout.setContentsMargins(2, 2, 2, 2)
@@ -28,19 +36,19 @@ class StatusWidget(QtGui.QWidget) :
         for i, status in enumerate(statusOrder):
             statusDict = status_config.statusMap[status]
             iconPath = statusDict.get('icon')
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(iconPath), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon = QtWidgets.QIcon()
+            icon.addPixmap(QtWidgets.QPixmap(iconPath), QtWidgets.QIcon.Normal, QtWidgets.QIcon.Off)
 
             self.widget.addItem(statusDict.get('display'))
             self.widget.setItemIcon(i, icon)
             self.widget.setItemData(i, status, QtCore.Qt.UserRole)
 
 
-class TaskWidget(QtGui.QWidget) :
+class TaskWidget(QtWidgets.QWidget) :
     def __init__(self, parent=None) :
         super(TaskWidget, self).__init__(parent)
-        self.allLayout = QtGui.QVBoxLayout()
-        self.widget = QtGui.QComboBox()
+        self.allLayout = QtWidgets.QVBoxLayout()
+        self.widget = QtWidgets.QComboBox()
         self.allLayout.addWidget(self.widget)
         self.allLayout.setSpacing(0)
         self.allLayout.setContentsMargins(2, 2, 2, 2)
@@ -89,11 +97,11 @@ class TaskWidget(QtGui.QWidget) :
                     self.widget.setItemData((row+firstItem), task, QtCore.Qt.UserRole)
 
 
-class UserWidget(QtGui.QWidget) :
+class UserWidget(QtWidgets.QWidget) :
     def __init__(self, parent = None) :
         super(UserWidget, self).__init__(parent)
-        self.allLayout = QtGui.QVBoxLayout()
-        self.widget = QtGui.QComboBox()
+        self.allLayout = QtWidgets.QVBoxLayout()
+        self.widget = QtWidgets.QComboBox()
         self.allLayout.addWidget(self.widget)
         self.allLayout.setSpacing(0)
         self.allLayout.setContentsMargins(2, 2, 2, 2)
@@ -145,13 +153,13 @@ class UserWidget(QtGui.QWidget) :
         f.write(data)
         f.close()
 
-class StepWidget(QtGui.QWidget) :
+class StepWidget(QtWidgets.QWidget) :
     """ department comboBox """
     def __init__(self, parent=None, pathInfo=None) :
         super(StepWidget, self).__init__(parent)
         self.pathInfo = pathInfo
-        self.allLayout = QtGui.QVBoxLayout()
-        self.widget = QtGui.QComboBox()
+        self.allLayout = QtWidgets.QVBoxLayout()
+        self.widget = QtWidgets.QComboBox()
         self.allLayout.addWidget(self.widget)
         self.allLayout.setSpacing(0)
         self.allLayout.setContentsMargins(2, 2, 2, 2)
@@ -182,7 +190,7 @@ class StepWidget(QtGui.QWidget) :
     def enable(self, state):
         self.widget.setEnabled(state)
 
-class DropUrlListWidget(QtGui.QListWidget):
+class DropUrlListWidget(QtWidgets.QListWidget):
     """ subclass QListWidget for dragdrop events """
     dropped = QtCore.Signal(list)
     def __init__(self, parent=None):
@@ -214,14 +222,14 @@ class DropUrlListWidget(QtGui.QListWidget):
         else:
             event.ignore()
 
-class SnapImageWidget(QtGui.QWidget) :
+class SnapImageWidget(QtWidgets.QWidget) :
     """ department comboBox """
     itemClicked = QtCore.Signal(str)
     def __init__(self, formats, isMaya, imgDst=None, parent=None) :
         super(SnapImageWidget, self).__init__(parent)
-        self.allLayout = QtGui.QVBoxLayout()
+        self.allLayout = QtWidgets.QVBoxLayout()
         self.widget = DropUrlListWidget()
-        self.button = QtGui.QPushButton()
+        self.button = QtWidgets.QPushButton()
         self.allLayout.addWidget(self.widget)
         self.allLayout.addWidget(self.button)
         self.allLayout.setSpacing(2)
@@ -240,13 +248,13 @@ class SnapImageWidget(QtGui.QWidget) :
         """ display path """
         for url in urls:
             if os.path.splitext(url)[-1] in self.formats:
-                item = QtGui.QListWidgetItem(self.widget)
+                item = QtWidgets.QListWidgetItem(self.widget)
                 item.setText(os.path.basename(url))
                 item.setData(QtCore.Qt.UserRole, url)
                 self.widget.setCurrentItem(item)
 
             else:
-                QtGui.QMessageBox.warning(self, 'Warning', 'Please drop only %s file' % str(self.formats))
+                QtWidgets.QMessageBox.warning(self, 'Warning', 'Please drop only %s file' % str(self.formats))
 
     def call_back(self):
         item = self.widget.currentItem()
@@ -254,7 +262,45 @@ class SnapImageWidget(QtGui.QWidget) :
         self.itemClicked.emit(data)
 
 
-class DropUrlLineEdit(QtGui.QLineEdit):
+class SnapSingleImageWidget(QtWidgets.QWidget) :
+    """ department comboBox """
+    snapped = QtCore.Signal(str)
+    def __init__(self, isMaya, imgDst=None, parent=None) :
+        super(SnapSingleImageWidget, self).__init__(parent=parent)
+        self.allLayout = QtWidgets.QVBoxLayout()
+
+        self.previewLabel = QtWidgets.QLabel()
+        self.button = QtWidgets.QPushButton()
+
+        self.allLayout.addWidget(self.previewLabel)
+        self.allLayout.addWidget(self.button)
+        self.allLayout.setSpacing(2)
+        self.allLayout.setContentsMargins(2, 2, 2, 2)
+        self.setLayout(self.allLayout)
+
+        self.preCapScreen = DimScreen(isMaya=isMaya, dstDir=imgDst)
+        self.button.setText('Snap Screen')
+
+        self.w = 300
+        self.h = 200
+        iconPath = '%s/_sgicons/nopreview_300_200.png' % (module_dir)
+        self.previewLabel.setPixmap(QtWidgets.QPixmap(iconPath).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
+
+        self.preCapScreen.snapped.connect(self.preview)
+        self.button.clicked.connect(self.snap)
+        self.previewFile = str()
+
+
+    def snap(self):
+        """ display path """
+        self.preCapScreen.show()
+
+    def preview(self, img):
+        self.previewLabel.setPixmap(QtWidgets.QPixmap(img).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
+        self.previewFile = img
+
+
+class DropUrlLineEdit(QtWidgets.QLineEdit):
     """ subclass QLineEdit for dragdrop events """
     dropped = QtCore.Signal(list)
     def __init__(self, parent=None):
@@ -285,12 +331,12 @@ class DropUrlLineEdit(QtGui.QLineEdit):
         else:
             event.ignore()
 
-class DropPathWidget(QtGui.QWidget) :
+class DropPathWidget(QtWidgets.QWidget) :
     """ lineEdit drag drop Widget """
     textChanged = QtCore.Signal(str)
     def __init__(self, parent=None) :
         super(DropPathWidget, self).__init__(parent)
-        self.allLayout = QtGui.QVBoxLayout()
+        self.allLayout = QtWidgets.QVBoxLayout()
         self.widget = DropUrlLineEdit()
         self.allLayout.addWidget(self.widget)
         self.allLayout.setSpacing(0)
@@ -305,24 +351,25 @@ class DropPathWidget(QtGui.QWidget) :
         self.textChanged.emit(urls[0])
 
 
-class DimScreen(QtGui.QSplashScreen):
+class DimScreen(QtWidgets.QSplashScreen):
+    snapped = QtCore.Signal(str)
     """ snap screen shot with rubber band """
     """ darken the screen by making splashScreen """
-    # app = QtGui.QApplication.instance() -> for maya
-    # app = QtGui.QApplication(sys.argv) -> for standalone
+    # app = QtWidgets.QApplication.instance() -> for maya
+    # app = QtWidgets.QApplication(sys.argv) -> for standalone
 
     def __init__(self, isMaya, dstDir=None, filename=None, ext='png'):
         """"""
         if isMaya:
-            app = QtGui.QApplication.instance()
+            app = QtWidgets.QApplication.instance()
         else:
-            app = QtGui.QApplication(sys.argv)
+            app = QtWidgets.QApplication(sys.argv)
 
         screenGeo = app.desktop().screenGeometry()
         width = screenGeo.width()
         height = screenGeo.height()
-        fillPix = QtGui.QPixmap(width, height)
-        fillPix.fill(QtGui.QColor(1,1,1))
+        fillPix = QtWidgets.QPixmap(width, height)
+        fillPix.fill(QtWidgets.QColor(1,1,1))
 
         super(DimScreen, self).__init__(fillPix)
         self.havePressed = False
@@ -332,7 +379,7 @@ class DimScreen(QtGui.QSplashScreen):
 
 
         self.setWindowState(QtCore.Qt.WindowFullScreen)
-        #self.setBackgroundRole(QtGui.QPalette.Dark)
+        #self.setBackgroundRole(QtWidgets.QPalette.Dark)
         self.setWindowOpacity(0.4)
 
         self.dstDir = self.setImgDst(dstDir)
@@ -346,7 +393,7 @@ class DimScreen(QtGui.QSplashScreen):
         self.origin = event.pos()
 
         if not self.rubberBand:
-            self.rubberBand = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+            self.rubberBand = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Rectangle, self)
         self.rubberBand.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
         self.rubberBand.show()
 
@@ -359,15 +406,23 @@ class DimScreen(QtGui.QSplashScreen):
             self.end = event.pos()
             self.hide()
 
-            self.capture()
+            output = self.capture()
 
     def capture(self):
-        outputFile = self.setOutput()
-        QPixmap.grabWindow(QApplication.desktop().winId(), self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y()).save('C:/Users/Ta/screenshot_windowed.png', 'png')
+        outputFile = self.output()
+        QtWidgets.QPixmap.grabWindow(QtWidgets.QApplication.desktop().winId(), self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y()).save(outputFile, self.ext)
+        self.snapped.emit(outputFile)
+        logger.info(outputFile)
+        return outputFile
 
 
-    def setOutput(self):
+    def output(self):
+        return '%s/tmpSnap.%s' % (self.dstDir, self.ext)
+    # def setOutput(self):
+    #     files = listFile(self.dstDir)
 
+    #     if files:
+    #         os.remove()
 
 
 

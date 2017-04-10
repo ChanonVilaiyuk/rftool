@@ -156,6 +156,8 @@ class ScenePublish(QtGui.QMainWindow):
         message = str(self.ui.message_plainTextEdit.toPlainText())
 
         self.trace('Submitting...')
+        print self.thumbnails
+        print self.movies
 
         if type(self.thumbnails) is list and not (None in self.thumbnails) and type(self.movies) is list and not (None in self.movies):
 
@@ -188,31 +190,33 @@ class ScenePublish(QtGui.QMainWindow):
 
         self.trace('Publishing...')
 
-        if not self.sg_task['sg_status_list'] == task_status:
+        print self.sg_task['sg_status_list'], task_status
 
-            QtGui.QMessageBox.warning(self, 'Warning', 'This version was published. Are you sure for publish this version?', )
+        # if not self.sg_task['sg_status_list'] == task_status:
 
-            if type(self.thumbnails) is list and not (None in self.thumbnails) and type(self.movies) is list and not (None in self.movies):
+        #     QtGui.QMessageBox.warning(self, 'Warning', 'This version was published. Are you sure for publish this version?', )
 
-                pub_utils.set_sg_version(self.version_name, version_status)
-                self.trace('Create version on shotgun')
+            # if type(self.thumbnails) is list and not (None in self.thumbnails) and type(self.movies) is list and not (None in self.movies):
 
-                pub_utils.set_sg_status([self.sg_task],task_status)
-                self.trace('Set "Pending for review" status on task')
+            #     pub_utils.set_sg_version(self.version_name, version_status)
+            #     self.trace('Create version on shotgun')
 
-            if self.thumbnails is str() and self.movies is str():
-                pub_utils.set_sg_version(self.version_name, version_status)
-                self.trace('Create version on shotgun')
-                pub_utils.set_sg_status([self.sg_task],task_status)
-                self.trace('Set status on task')
+            #     pub_utils.set_sg_status([self.sg_task],task_status)
+            #     self.trace('Set "Pending for review" status on task')
 
-            else:
-                QtGui.QMessageBox.warning(self, 'Warning', 'Please get new playblast.')
+            # if self.thumbnails is str() and self.movies is str():
+            #     pub_utils.set_sg_version(self.version_name, version_status)
+            #     self.trace('Create version on shotgun')
+            #     pub_utils.set_sg_status([self.sg_task],task_status)
+            #     self.trace('Set status on task')
 
-class FrameConfirmWidget(QtGui.QWidget):
+            # else:
+            #     QtGui.QMessageBox.warning(self, 'Warning', 'Please get new playblast.')
+
+class FrameConfirmWindow(QtGui.QMainWindow):
     """docstring for FrameConfirmWidget"""
     def __init__(self, parent=None):
-        super(FrameConfirmWidget, self).__init__()
+        super(FrameConfirmWindow, self).__init__()
 
         self.headers = ['Shot Name',' Start ','  End  ','Duration']
         
@@ -221,6 +225,8 @@ class FrameConfirmWidget(QtGui.QWidget):
         self.shot_table.setColumnCount(4)
         self.shot_table.setHorizontalHeaderLabels(self.headers)
         self.shot_table.setSelectionMode(QtCore.Qt.NoSelection)
+
+        self.show()
 
     def setRows(self,shotLists=dict()):
 

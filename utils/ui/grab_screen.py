@@ -28,13 +28,14 @@ except ImportError:
     from startup import setEnv
     setEnv.set()
 
+from PySide import QtGui, QtCore
+from PySide.QtGui import QPixmap, QApplication
+
 if isMaya:
 	app = QtGui.QApplication.instance()
 else:
 	app = QtGui.QApplication(sys.argv)
 
-from PySide import QtGui, QtCore
-from PySide.QtGui import QPixmap, QApplication
 
 
 class DimScreen(QtGui.QSplashScreen):

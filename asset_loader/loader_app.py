@@ -81,7 +81,7 @@ class SGAssetLoader(QtGui.QMainWindow):
         self.ui.download_pushButton.clicked.connect(self.sg_get_entitys_thumbnail)
         self.ui.typeAsset_listWidget.itemSelectionChanged.connect(self.selected_type_list)
         self.ui.subTypeAsset_listWidget.itemSelectionChanged.connect(self.select_sub_list)
-        self.ui.asset_listWidget.itemSelectionChanged.connect(self.select_asset_list)
+        # self.ui.asset_listWidget.itemSelectionChanged.connect(self.select_asset_list)
 
     def initial_ui(self):
         self.list_project()
@@ -91,7 +91,7 @@ class SGAssetLoader(QtGui.QMainWindow):
         # self.ui.project_comboBox.addItems(get_project().keys())
         self.ui.project_comboBox.addItems(['project'])
 
-    def set_asset_path(self):
+    # def set_asset_path(self):
 
     def get_asset(self):
 
@@ -163,19 +163,19 @@ class SGAssetLoader(QtGui.QMainWindow):
 
         self.selected_all_list(type_name,sub_name,asset_name)
 
-    def select_asset_list(self):
-        type_item = self.ui.typeAsset_listWidget.currentItem()
-        type_name = str(type_item.text())
-        sub_item = self.ui.subTypeAsset_listWidget.currentItem()
-        sub_name = str(sub_item.text())
+    # def select_asset_list(self):
+    #     type_item = self.ui.typeAsset_listWidget.currentItem()
+    #     type_name = str(type_item.text())
+    #     sub_item = self.ui.subTypeAsset_listWidget.currentItem()
+    #     sub_name = str(sub_item.text())
 
-        asset_name = 'All'
+    #     asset_name = 'All'
 
-        if self.ui.asset_listWidget.currentItem():
-            asset_item = self.ui.asset_listWidget.currentItem()
-            asset_name = str(asset_item.text())
+    #     if self.ui.asset_listWidget.currentItem():
+    #         asset_item = self.ui.asset_listWidget.currentItem()
+    #         asset_name = str(asset_item.text())
 
-        self.selected_all_list(type_name,sub_name,asset_name)
+    #     self.selected_all_list(type_name,sub_name,asset_name)
 
 
     def selected_all_list(self, type_name ='All',subtype_name='All',asset_name='All'):

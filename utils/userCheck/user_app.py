@@ -6,10 +6,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 #Import GUI
-from PySide import QtCore
-from PySide import QtGui
+from Qt import QtCore
+from Qt import QtWidgets
 
-from shiboken import wrapInstance
+from Qt import wrapInstance
 
 #Import maya commands
 import maya.cmds as mc
@@ -19,15 +19,20 @@ from functools import partial
 # import ui
 import ui_dialog
 from rftool.utils import sg_process
+from rftool.utils.ui import load
 from startup import config
 
+moduleDir = os.path.dirname(sys.modules[__name__].__file__)
 
-class userDialog(QtGui.QDialog):
+
+class userDialog(QtWidgets.QDialog):
 
     def __init__(self, sgUser=None, parent=None):
         super(userDialog, self).__init__(parent)
-        self.ui = ui_dialog.Ui_UserDialogUI()
-        self.ui.setupUi(self)
+        # self.ui = ui_dialog.Ui_UserDialogUI()
+        # self.ui.setupUi(self)
+        uiFile = '%s/ui_dialog.ui' % moduleDir
+        self.ui = load.loadUI(uiFile, self)
 
         self.sgUser = sgUser
         self.set_signals()
@@ -52,7 +57,7 @@ class userDialog(QtGui.QDialog):
         self.ui.listWidget.setSortingEnabled(True)
 
         for user in self.sgUser:
-            item = QtGui.QListWidgetItem(self.ui.listWidget)
+            item = QtWidgets.QListWidgetItem(self.ui.listWidget)
 
             name = user['name']
             localUser = user['sg_localuser']
@@ -77,14 +82,14 @@ class userDialog(QtGui.QDialog):
             if not localUser in [a['sg_localuser'] for a in self.sgUser]:
                 if not localUser in ['0', 0]:
                     if localUser and sgUser:
-                        result = QtGui.QMessageBox.question(self, 'Confirm', 'Link %s to %s?' % (localUser, sgUser), QtGui.QMessageBox.Yes, QtGui.QMessageBox.Cancel)
+                        result = QtWidgets.QMessageBox.question(self, 'Confirm', 'Link %s to %s?' % (localUser, sgUser), QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Cancel)
 
-                        if result == QtGui.QMessageBox.Yes:
+                        if result == QtWidgets.QMessageBox.Yes:
                             sg_process.link_local_user(userEntitiy['id'], localUser)
                             self.close()
                 else:
-                    QtGui.QMessageBox.warning(self, 'Error', 'Please set your name first')
+                    QtWidgets.QMessageBox.warning(self, 'Error', 'Please set your name first')
             else:
-                QtGui.QMessageBox.warning(self, 'Error', '%s already linked to shotgun account' % localUser)
+                QtWidgets.QMessageBox.warning(self, 'Error', '%s already linked to shotgun account' % localUser)
         else:
-            QtGui.QMessageBox.warning(self, 'Error', 'Select shotgun user')
+            QtWidgets.QMessageBox.warning(self, 'Error', 'Select shotgun user')

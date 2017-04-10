@@ -2,8 +2,6 @@ import os
 import maya.cmds as mc
 import maya.mel as mm
 
-import asm_utils
-
 for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
     if os.path.exists(path + '/AbcImport.mll'):
         if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
@@ -16,6 +14,9 @@ for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
     if os.path.exists(path + '/gpuCache.mll'):
         if not mc.pluginInfo('gpuCache.mll', q=True, l=True):
             mc.loadPlugin(path + '/gpuCache.mll')
+
+def ok_dialog(title,message):
+    mc.confirmDialog( title=title, message=message,button=['OK'], cancelButton='OK' )
 
 def get_path():
     return mc.file(q=True, loc=True)
@@ -283,8 +284,8 @@ def create_abc_cache(objLongName='',abcPath=''):
 
 def check_duplicate_name():
 
-    if mc.objExists('rig_grp'):
-        mc.select('rig_grp', hi=True )
+    if mc.objExists('Rig_Grp'):
+        mc.select('Rig_Grp', hi=True )
         lists = mc.ls(sl=True,type='transform')
 
         mc.select(clear=True)
@@ -318,16 +319,6 @@ def create_reference(assetName, path):
         result = mc.file(path, r=True, ns=namespace)
         return namespace
 
-def create_asm_reference(assetName, path):
-    if os.path.exists(path):
-        namespace = get_namespace('%s_001' % assetName)
-        arNode = asm_utils.createARNode()
-        asm_utils.setARDefinitionPath(arNode, path)
-        asm_utils.setARNamespace(arNode, namespace)
-        result = mc.rename(arNode, '%s_AR' % assetName)
-
-        return result
-
 def duplicate_reference(path):
     namespace = mc.file(path, q=True, namespace=True)
     newNamespace = get_namespace(namespace)
@@ -349,41 +340,3 @@ def get_namespace(namespace):
             newNamespace = '%s_001' % namespace
 
         return get_namespace(newNamespace)
-
-def export_selection(exportPath, obj):
-    exportResult = False
-
-    if not os.path.exists(exportPath):
-        mtime = 0
-
-    else:
-        mtime = os.path.getmtime(exportPath)
-
-    mc.select(obj)
-    result = mc.file(exportPath, f=True, es=True, type='mayaAscii')
-
-    if os.path.exists(exportPath):
-        if not mtime == os.path.getmtime(exportPath):
-            exportResult = True
-
-    if exportResult:
-        return result
-
-
-def export_gpu(objs, dstDir, filename, time='still'):
-    gpuPath = '%s/%s.abc' % (dstDir, filename)
-    exportResult = False
-
-    if not os.path.exists(gpuPath):
-        mtime = 0
-    else:
-        mtime = os.path.getmtime(gpuPath)
-
-    asm_utils.exportGPUCacheGrp(objs, dstDir, filename, time=time)
-
-    if os.path.exists(gpuPath):
-        if not mtime == os.path.getmtime(gpuPath):
-            exportResult = True
-
-    if exportResult:
-        return gpuPath

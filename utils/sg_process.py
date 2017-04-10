@@ -195,6 +195,8 @@ def set_entity_status(entity, entityId, status):
 def assign_task(taskId, userId):
 	return sg.update('Task', taskId, {'task_assignees': [{'type': 'HumanUser', 'id': userId}]})
 
+def update_entity_thumbnail(entity, id, path):
+	return sg.upload_thumbnail(entity, id, path)
 ########################### Other ###########################
 
 def add_list_field(name, field) :
