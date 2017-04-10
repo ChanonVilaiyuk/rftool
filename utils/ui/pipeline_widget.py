@@ -2,6 +2,7 @@ import os
 import sys
 from Qt import QtCore
 from Qt import QtWidgets
+from Qt import QtGui
 
 module_path = sys.modules[__name__].__file__
 module_dir  = os.path.dirname(module_path)
@@ -37,7 +38,7 @@ class StatusWidget(QtWidgets.QWidget) :
             statusDict = status_config.statusMap[status]
             iconPath = statusDict.get('icon')
             icon = QtWidgets.QIcon()
-            icon.addPixmap(QtWidgets.QPixmap(iconPath), QtWidgets.QIcon.Normal, QtWidgets.QIcon.Off)
+            icon.addPixmap(QtGui.QPixmap(iconPath), QtWidgets.QIcon.Normal, QtWidgets.QIcon.Off)
 
             self.widget.addItem(statusDict.get('display'))
             self.widget.setItemIcon(i, icon)
@@ -284,7 +285,7 @@ class SnapSingleImageWidget(QtWidgets.QWidget) :
         self.w = 300
         self.h = 200
         iconPath = '%s/_sgicons/nopreview_300_200.png' % (module_dir)
-        self.previewLabel.setPixmap(QtWidgets.QPixmap(iconPath).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
+        self.previewLabel.setPixmap(QtGui.QPixmap(iconPath).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
 
         self.preCapScreen.snapped.connect(self.preview)
         self.button.clicked.connect(self.snap)
@@ -296,7 +297,7 @@ class SnapSingleImageWidget(QtWidgets.QWidget) :
         self.preCapScreen.show()
 
     def preview(self, img):
-        self.previewLabel.setPixmap(QtWidgets.QPixmap(img).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
+        self.previewLabel.setPixmap(QtGui.QPixmap(img).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
         self.previewFile = img
 
 
@@ -368,8 +369,8 @@ class DimScreen(QtWidgets.QSplashScreen):
         screenGeo = app.desktop().screenGeometry()
         width = screenGeo.width()
         height = screenGeo.height()
-        fillPix = QtWidgets.QPixmap(width, height)
-        fillPix.fill(QtWidgets.QColor(1,1,1))
+        fillPix = QtGui.QPixmap(width, height)
+        fillPix.fill(QtGui.QColor(1,1,1))
 
         super(DimScreen, self).__init__(fillPix)
         self.havePressed = False
@@ -410,7 +411,7 @@ class DimScreen(QtWidgets.QSplashScreen):
 
     def capture(self):
         outputFile = self.output()
-        QtWidgets.QPixmap.grabWindow(QtWidgets.QApplication.desktop().winId(), self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y()).save(outputFile, self.ext)
+        QtGui.QPixmap.grabWindow(QtWidgets.QApplication.desktop().winId(), self.origin.x(), self.origin.y(), self.end.x()-self.origin.x(), self.end.y()-self.origin.y()).save(outputFile, self.ext)
         self.snapped.emit(outputFile)
         logger.info(outputFile)
         return outputFile
