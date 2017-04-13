@@ -76,8 +76,12 @@ def get_subtype():
 def get_type():
 	return sg.schema_field_read('Asset', 'sg_asset_type')['sg_asset_type']["properties"]["valid_values"]["value"]
 
-def get_assets(project):
-	filters = [['project.Project.name', 'is', project]]
+def get_assets(project, filters=None):
+	projectFilters = ['project.Project.name', 'is', project]
+	if not filters: 
+		filters = [projectFilters]
+	else: 
+		filters.append(projectFilters)
 	fields = ['code', 'sg_asset_type', 'sg_subtype', 'sg_episodes']
 	return sg.find('Asset', filters, fields)
 
@@ -197,6 +201,14 @@ def assign_task(taskId, userId):
 
 def update_entity_thumbnail(entity, id, path):
 	return sg.upload_thumbnail(entity, id, path)
+
+def update_subasset_list(id, entities, sg_field='assets'): 
+	currentEntities = sg.find_one('Asset', [['id', 'is', id]], [sg_field])
+	updateEntities = entities
+	if currentEntities.get('assets'): 
+		updateEntities = updateEntities + currentEntities.get('assets')
+	data = {sg_field: updateEntities}
+	return sg.update('Asset', id, data)
 ########################### Other ###########################
 
 def add_list_field(name, field) :
@@ -257,3 +269,4 @@ def taskFields(entityType) :
 	if entityType == 'Shot' :
 		fields = fields + shotFields
 	return fields
+
