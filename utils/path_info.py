@@ -1,7 +1,8 @@
 import os
 import sys
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 from startup import config
@@ -38,6 +39,7 @@ class PathInfo(object):
 
         # cache variable
         self.cacheProjectCode = None
+        self.cacheEntity = None
 
     def __str__(self):
         return self.path
@@ -57,7 +59,7 @@ class PathInfo(object):
         pathElems.append((entity.get('name', 'none')))
         pathElems.append((entity.get('step', 'none')))
 
-        logger.debug('Object were construct with %s' % self.path)
+        # logger.debug('Object were constructed with %s' % self.path)
         return ('/').join(pathElems)
 
     @property
@@ -175,6 +177,12 @@ class PathInfo(object):
     def filename(self):
         return os.path.basename(self.path)
 
+    def basename(self, ext=True): 
+        path = self.filename
+        if not ext: 
+            path = os.path.splitext(self.filename)[0]
+        return path
+
     @property
     def taskName(self):
         versionKey = '_v'
@@ -233,6 +241,8 @@ class PathInfo(object):
             result = sg_hook.sg.find_one('Project', [['name', 'is', self.project]], ['sg_project_code'])
             if result:
                 self.cacheProjectCode = result['sg_project_code']
+            else: 
+                logger.warning('No project code found')
 
         return self.cacheProjectCode
 
@@ -243,6 +253,24 @@ class PathInfo(object):
 
         if self.entity == config.scene:
             return self.shotName(fullName=False)
+
+    @property
+    def sgEntity(self): 
+        if not self.cacheEntity: 
+            from rftool.utils import sg_hook
+            
+            if self.entity == config.asset: 
+                entityType = 'Asset'
+            if self.entity == config.scene: 
+                entityType = 'Shot'
+
+            if entityType: 
+                filters = [['project.Project.name', 'is', self.project], ['code', 'is', self.name]]
+                fields = ['code', 'id']
+                self.cacheEntity = sg_hook.sg.find_one(entityType, filters, fields)
+
+        return self.cacheEntity
+
 
     @property
     def versionNoUser(self):
@@ -263,6 +291,18 @@ class PathInfo(object):
     def libPath(self, root='RFPROJECT'):
         projRoot = os.environ.get(root, '')
         return '{0}/{1}/{2}/{3}/{4}/{5}/{6}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, config.ref)
+
+    def texturePath(self, root='RFPROJECT'): 
+        projRoot = os.environ.get(root, '')
+        return '{0}/{1}/{2}/{3}/{4}/{5}/{6}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, config.texture)
+
+    def mediaPath(self, root='RFPROJECT'): 
+        projRoot = os.environ.get(root, '')
+        return '{0}/{1}/{2}/{3}/{4}/{5}/{6}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, config.media)
+
+    @property
+    def mediaFile(self): 
+        return '{0}/{1}.{2}'.format(self.mediaPath(), self.name, config.stillExt)
 
     def workspaceDir(self, root='RFPROJECT'):
         return config.workDir.get(root, '')
@@ -378,6 +418,10 @@ def guess_res(filename):
     lastElem = name.split('_')[-1]
     if lastElem in config.res:
         return lastElem
+    else: 
+        for each in name.split('_'): 
+            if each in config.res: 
+                return each
 
 def listFile(path):
     return [a for a in os.listdir(path) if os.path.isfile(os.path.join(path, a))]

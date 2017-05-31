@@ -37,8 +37,8 @@ class StatusWidget(QtWidgets.QWidget) :
         for i, status in enumerate(statusOrder):
             statusDict = status_config.statusMap[status]
             iconPath = statusDict.get('icon')
-            icon = QtWidgets.QIcon()
-            icon.addPixmap(QtGui.QPixmap(iconPath), QtWidgets.QIcon.Normal, QtWidgets.QIcon.Off)
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap(iconPath), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
             self.widget.addItem(statusDict.get('display'))
             self.widget.setItemIcon(i, icon)
@@ -299,6 +299,7 @@ class SnapSingleImageWidget(QtWidgets.QWidget) :
     def preview(self, img):
         self.previewLabel.setPixmap(QtGui.QPixmap(img).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
         self.previewFile = img
+        self.snapped.emit(img)
 
 
 class DropUrlLineEdit(QtWidgets.QLineEdit):
@@ -364,7 +365,9 @@ class DimScreen(QtWidgets.QSplashScreen):
         if isMaya:
             app = QtWidgets.QApplication.instance()
         else:
-            app = QtWidgets.QApplication(sys.argv)
+            app = QtWidgets.QApplication.instance()
+            if not app: 
+                app = QtWidgets.QApplication(sys.argv)
 
         screenGeo = app.desktop().screenGeometry()
         width = screenGeo.width()

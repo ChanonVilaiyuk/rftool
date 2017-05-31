@@ -1,14 +1,15 @@
 import sys
 import os
-from PySide import QtCore
-from PySide import QtGui
+from Qt import QtCore
+from Qt import QtGui
+from Qt import QtWidgets
 
 
-class ProjectBrowser(QtGui.QWidget) :
+class ProjectBrowser(QtWidgets.QWidget) :
     entityChanged = QtCore.Signal(list)
     def __init__(self, parent=None, root=None, mode='asset', pathInfo=None) :
         super(ProjectBrowser, self).__init__(parent)
-        self.allLayout = QtGui.QGridLayout()
+        self.allLayout = QtWidgets.QGridLayout()
 
         # root
         self.root = root
@@ -17,18 +18,18 @@ class ProjectBrowser(QtGui.QWidget) :
         self.pathInfo = pathInfo
 
         # label
-        self.projectLabel = QtGui.QLabel()
-        self.entitySub1Label = QtGui.QLabel()
-        self.entitySub2Label = QtGui.QLabel()
-        self.entityLabel = QtGui.QLabel()
-        self.taskLabel = QtGui.QLabel()
+        self.projectLabel = QtWidgets.QLabel()
+        self.entitySub1Label = QtWidgets.QLabel()
+        self.entitySub2Label = QtWidgets.QLabel()
+        self.entityLabel = QtWidgets.QLabel()
+        self.taskLabel = QtWidgets.QLabel()
 
         # comboBox
-        self.projectComboBox = QtGui.QComboBox()
-        self.entitySub1ComboBox = QtGui.QComboBox()
-        self.entitySub2ComboBox = QtGui.QComboBox()
-        self.entityComboBox = QtGui.QComboBox()
-        self.taskComboBox = QtGui.QComboBox()
+        self.projectComboBox = QtWidgets.QComboBox()
+        self.entitySub1ComboBox = QtWidgets.QComboBox()
+        self.entitySub2ComboBox = QtWidgets.QComboBox()
+        self.entityComboBox = QtWidgets.QComboBox()
+        self.taskComboBox = QtWidgets.QComboBox()
 
         self.allLayout.addWidget(self.projectLabel, 0, 0)
         self.allLayout.addWidget(self.projectComboBox, 0, 1)

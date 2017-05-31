@@ -3,6 +3,7 @@ import os,traceback
 import shutil
 import time
 from datetime import datetime
+import glob
 # from yaml import load, dump
 # from yaml import Loader, Dumper
 # import yaml
@@ -287,4 +288,15 @@ def backup(srcFile) :
     # backup
     result = backupSuccess = copy(srcFile, backupFile)
 
+    return result
+
+def get_latest_file(srcDir):
+    # print srcDir
+    # print listFile(srcDir)
+    list_of_files = glob.glob('%s/*' %(srcDir)) # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    return latest_file
+
+def copy_to_clipboard(text): 
+    result = os.system("echo '%s'|clip" % text)
     return result

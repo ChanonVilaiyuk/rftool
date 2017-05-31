@@ -9,6 +9,8 @@ no = '%s/icons/%s' % (iconPath, 'X_icon.png')
 dir = '%s/icons/%s' % (iconPath, 'dir_icon.png')
 nodir = '%s/icons/%s' % (iconPath, 'nodir_icon.png')
 maya = '%s/icons/%s' % (iconPath, 'maya_icon.png')
+camera = '%s/icons/%s' % (iconPath, 'camera_icon.png')
+cameraNa = '%s/icons/%s' % (iconPath, 'cameraNa_icon.png')
 
 # sg
 sgWtg = '%s/icons/%s' % (iconPath, 'wtg_icon.png')

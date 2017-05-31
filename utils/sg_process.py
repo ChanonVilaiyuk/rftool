@@ -25,7 +25,7 @@ def get_projects():
 	return sg.find('Project', [], ['name', 'id', 'sg_project_code'])
 
 def get_one_project(project):
-	filters = [['project.Project.name', 'is', project]]
+	filters = [['name', 'is', project]]
 	fields = ['code', 'id']
 	return sg.find_one('Project', filters, fields)
 
@@ -45,11 +45,11 @@ def get_sequences(project, episode):
 	fields = ['code', 'id', 'sg_shortcode']
 	return sg.find('Sequence', filters, fields)
 
-def get_one_sequence(project, episode, sequence):
+def get_one_sequence(project, episode, sequence, fields=[]):
 	filters = [['project.Project.name', 'is', project],
 				['sg_episode.Scene.code', 'is', episode],
 				['code', 'is', sequence]]
-	fields = ['code', 'id']
+	fields = fields + ['code', 'id']
 	return sg.find_one('Sequence', filters, fields)
 
 def get_shots(project, episode, sequence):

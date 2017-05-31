@@ -1,21 +1,32 @@
 import os
-import maya.cmds as mc
-import maya.mel as mm
 
-import asm_utils
+try: 
+    import maya.cmds as mc
+    import maya.mel as mm
+    isMaya = True
+    import asm_utils
 
-for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
-    if os.path.exists(path + '/AbcImport.mll'):
-        if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
-            mc.loadPlugin(path + '/AbcImport.mll')
+except ImportError: 
+    isMaya = False
 
-    if os.path.exists(path + '/AbcExport.mll'):
-        if not mc.pluginInfo('AbcExport.mll', q=True, l=True):
-            mc.loadPlugin(path + '/AbcExport.mll')
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
-    if os.path.exists(path + '/gpuCache.mll'):
-        if not mc.pluginInfo('gpuCache.mll', q=True, l=True):
-            mc.loadPlugin(path + '/gpuCache.mll')
+
+if isMaya: 
+    for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
+        if os.path.exists(path + '/AbcImport.mll'):
+            if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
+                mc.loadPlugin(path + '/AbcImport.mll')
+
+        if os.path.exists(path + '/AbcExport.mll'):
+            if not mc.pluginInfo('AbcExport.mll', q=True, l=True):
+                mc.loadPlugin(path + '/AbcExport.mll')
+
+        if os.path.exists(path + '/gpuCache.mll'):
+            if not mc.pluginInfo('gpuCache.mll', q=True, l=True):
+                mc.loadPlugin(path + '/gpuCache.mll')
 
 def get_path():
     return mc.file(q=True, loc=True)
@@ -334,6 +345,17 @@ def duplicate_reference(path):
     result = mc.file(path, r=True, ns=newNamespace)
     return newNamespace
 
+def open_file(path):
+    if os.path.exists(path):
+        mc.file(path,f=True,o=True)
+
+def import_file(assetName,path):
+    if os.path.exists(path):
+        namespace = get_namespace('%s_001' % assetName)
+        mc.file(path,i=True,ns=namespace)
+        # mc.file -import -type "mayaAscii"  -ignoreVersion -ra true -mergeNamespacesOnClash false -namespace "stoolA_rig_md" -options "v=0;p=17;f=0"  -pr "C:/Users/User/Dropbox/publ_server/project/asset/setDress/furniture/stoolA/lib/stoolA_rig_md.ma";
+
+
 def get_namespace(namespace):
     # asset_001
     if not mc.namespace(ex=namespace):
@@ -387,3 +409,154 @@ def export_gpu(objs, dstDir, filename, time='still'):
 
     if exportResult:
         return gpuPath
+
+
+def shiftKey(type = 'default', frameRange = [1, 10000], frame = 0) : 
+    """ shift key frame, shift all use default mode """ 
+    if type == 'default' : 
+        mm.eval('selectKey  -t (":") `ls -dag`;')
+
+    if type == 'start' : 
+        mm.eval('selectKey -t ("%s:") `ls -dag`;' % frameRange[0])
+
+    if type == 'range' : 
+        mm.eval('selectKey  -t ("%s:%s") `ls -dag`;' % (frameRange[0], frameRange[1]))
+
+    mc.keyframe(e = True, iub = 0, an = 'keys', r = True, o = 'over', tc = frame)
+
+
+def shiftShot(shotName, frame=0): 
+    """ shift individual shot """ 
+    sequenceStartFrame = mc.getAttr('%s.sequenceStartFrame' % shotName)
+    sequenceEndFrame = mc.getAttr('%s.sequenceEndFrame' % shotName)
+    startFrame = mc.getAttr('%s.startFrame' % shotName)
+    endFrame = mc.getAttr('%s.endFrame' % shotName)
+
+    mc.setAttr('%s.sequenceStartFrame' % shotName, sequenceStartFrame + frame)
+    mc.setAttr('%s.startFrame' % shotName, startFrame + frame)
+
+    mc.setAttr('%s.sequenceEndFrame' % shotName, sequenceEndFrame + frame)
+    mc.setAttr('%s.endFrame' % shotName, endFrame + frame)
+
+
+def shiftSequencer(frame=0, mute=False): 
+    """ shift the whole time line """ 
+    shots = mc.ls(type='shot')
+    infoDict = dict()
+
+    if shots: 
+        for shot in shots: 
+            sequenceStartFrame = mc.getAttr('%s.sequenceStartFrame' % shot)
+
+            if not sequenceStartFrame in infoDict.keys(): 
+                infoDict.update({sequenceStartFrame: [shot]})
+            else: 
+                infoDict[sequenceStartFrame].append(shot)
+
+        # positive move from last shot
+        if frame > 0: 
+            shotDict = sorted(infoDict.iteritems())[::-1]
+
+        if frame < 0: 
+            shotDict = sorted(infoDict.iteritems())
+        
+        for key, shots in shotDict: 
+            for shotName in shots: 
+                shiftShot(shotName, frame=frame)
+                mc.shot(shotName, e=True, mute=mute)
+
+
+def getTextureFile() : 
+    """ get texture files in the scene """ 
+    fileNodes = mc.ls(type = 'file')
+    files = []
+
+    if fileNodes : 
+        for each in fileNodes : 
+            fileTexture = mc.getAttr('%s.fileTextureName' % each)
+
+            fileStatus = False 
+            if os.path.exists(fileTexture) : 
+                fileStatus = True 
+
+            files.append((fileTexture, fileStatus))
+
+    return files
+
+
+def getAssemblyFiles() : 
+    """ get assembly node files """ 
+    sels = mc.ls(type = 'assemblyReference')
+    copyFiles = []
+
+    if sels : 
+        for each in sels : 
+            ad = mc.getAttr('%s.definition' % each)
+            
+            if ad : 
+                fileStatus = False
+
+                if os.path.exists(ad) : 
+                    fileStatus = True
+                    
+                copyFiles.append((ad, fileStatus))
+
+            datas = listRepIndex(each, 'data')
+            
+            if datas : 
+                for each in datas : 
+                    fileStatus = False
+                    if os.path.exists(each) : 
+                        fileStatus = True
+                        
+                    copyFiles.append((each, fileStatus))
+
+    return copyFiles
+
+
+def listRepIndex(assemblyNode, listType = 'name') : 
+    lists = mc.assembly(assemblyNode, q = True, listRepresentations = True)
+
+    if listType == 'name' : 
+        return lists 
+
+    labels = []
+    datas = []
+
+    if lists : 
+        for i in range(len(lists)) : 
+            label = mc.getAttr('%s.representations[%s].repLabel' % (assemblyNode, i))
+            data = mc.getAttr('%s.representations[%s].repData' % (assemblyNode, i))
+            labels.append(label)
+            datas.append(data)
+
+    if listType == 'label' : 
+        return labels 
+
+    if listType == 'data' : 
+        return datas
+
+
+def getMayaSceneAssets(mayaFile, mayaVersion, console=False) : 
+    """ get maya assets """ 
+    import pipeline_utils
+
+    pyCommand = '%s/core/maya/rftool/utils/get_asset_list.py' % os.getenv('RFSCRIPT')
+    pipeline_utils.runMayaPy(pyCommand, mayaVersion, console, mayaFile)
+
+    tmpFile = 'mayaAssetList.txt'
+    tmpdir = os.getenv('TMPDIR')
+    if not tmpdir: 
+        tmpdir = os.getenv('TMP')
+
+    tmpPath = '%s/%s' % (tmpdir, tmpFile)
+
+    if os.path.exists(tmpPath) : 
+        f = open(tmpPath, 'r')
+        data = f.read()
+        f.close()
+
+        result = eval(data)
+        os.remove(tmpPath)
+
+        return result 
