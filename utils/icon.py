@@ -11,6 +11,7 @@ nodir = '%s/icons/%s' % (iconPath, 'nodir_icon.png')
 maya = '%s/icons/%s' % (iconPath, 'maya_icon.png')
 camera = '%s/icons/%s' % (iconPath, 'camera_icon.png')
 cameraNa = '%s/icons/%s' % (iconPath, 'cameraNa_icon.png')
+noimg = '%s/icons/%s' % (iconPath, 'tmp_thumbnail.jpg')
 
 # sg
 sgWtg = '%s/icons/%s' % (iconPath, 'wtg_icon.png')
