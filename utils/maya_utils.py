@@ -45,7 +45,7 @@ def setup_scene_viewport_playblast():
     mc.setAttr("defaultResolution.width",1024)
     mc.setAttr("defaultResolution.height",1024)
 
-def playblast_capture_1k(image_path, atFrame=None):
+def playblast_capture_1k(image_path, atFrame=None, w=1024, h=1024):
     file_extention = image_path.split('.')[-1]
     index = int(image_path.split('.')[-2])
     image_no_extention = image_path.split('.')[0]
@@ -66,7 +66,7 @@ def playblast_capture_1k(image_path, atFrame=None):
                     percent=100,
                     compression=file_extention,
                     quality=100,
-                    widthHeight=[1024,1024])
+                    widthHeight=[w, h])
 
     if result:
         print 'result', result
@@ -122,6 +122,41 @@ def playblast_avi(mov_path,start,end,resolution,width=960,height=540):
         result = result.replace('####','%04d' %(start))
 
     return result
+
+
+def capture_screen(dst, format, st, sequencer, w, h) : 
+    outputFile = dst.split('.')[0]
+    extension = dst.split('.')[-1]
+
+    start = st
+    end = start
+
+    result = mc.playblast( format= 'iff' ,
+                            filename= outputFile,
+                            st=start ,
+                            et=end ,
+                            forceOverwrite=True ,
+                            sequenceTime=sequencer ,
+                            clearCache=1 ,
+                            viewer= 0 ,
+                            showOrnaments=1 ,
+                            fp=4 ,
+                            widthHeight= [w,h] ,
+                            percent=100 ,
+                            compression= format ,
+                            offScreen=True ,
+                            quality=70
+                            )
+
+
+    if result : 
+        padding = '%04d' % start 
+        output = result.replace('####', padding)
+        if os.path.exists(dst) : 
+            os.remove(dst)
+        os.rename(output, dst)
+
+        return dst
 
 def correct_cam(shotName):
     cam_name = shotName + '_cam'
@@ -261,27 +296,37 @@ def HUDPlayblast(user,versionName):
 #         newname = '_'.join([res,oldname])
 #         mc.rename(oldname,newname)
 
-def create_rig_grp(objs=None, res='md', ctrl=True):
-    from rftool.rig.utils import main_group
+# def create_rig_grp(objs=None, res='md', ctrl=True):
+#     from rftool.rig.utils import main_group
+#     if not objs:
+#         objs = mc.ls(sl=True)
+
+#     rigGrp = main_group.MainGroup('rig')
+
+#     if not ctrl:
+#         mc.delete(rigGrp.Place_Ctrl)
+
+#     if objs:
+#         if res == 'md':
+#             mc.parent(objs, rigGrp.Geo_Md)
+#         if res == 'hi':
+#             mc.parent(objs, rigGrp.Geo_Hi)
+#         if res == 'lo':
+#             mc.parent(objs, rigGrp.Geo_Lo)
+#         if res == 'pr':
+#             mc.parent(objs, rigGrp.Geo_Pr)
+
+#     return rigGrp
+
+def create_rig_grp(objs=None, res='md', ctrl=True): 
+    from rftool.rig.utils import mainCtrl
+    reload(mainCtrl)
     if not objs:
         objs = mc.ls(sl=True)
 
-    rigGrp = main_group.MainGroup('rig')
-
-    if not ctrl:
-        mc.delete(rigGrp.Place_Ctrl)
-
-    if objs:
-        if res == 'md':
-            mc.parent(objs, rigGrp.Geo_Md)
-        if res == 'hi':
-            mc.parent(objs, rigGrp.Geo_Hi)
-        if res == 'lo':
-            mc.parent(objs, rigGrp.Geo_Lo)
-        if res == 'pr':
-            mc.parent(objs, rigGrp.Geo_Pr)
-
+    rigGrp = mainCtrl.rigMain()
     return rigGrp
+
 
 
 def create_gpu_cache(objName='',gpuDirname='',gpuBasename=''):
@@ -558,5 +603,38 @@ def getMayaSceneAssets(mayaFile, mayaVersion, console=False) :
 
         result = eval(data)
         os.remove(tmpPath)
+
+        return result 
+
+
+def exportGPUCacheGrp(exportGrp, exportPath, abcName, time = 'still') : 
+    startFrame = 1.0
+    endFrame = 1.0
+
+    if time == 'still' : 
+        currentFrame = mc.currentTime(q = True)
+        startFrame = currentFrame
+        endFrame = currentFrame 
+
+    if time == 'animation' : 
+        startFrame = mc.playbackOptions(q = True, min = True)
+        endFrame = mc.playbackOptions(q = True, max = True)
+
+    # export objs 
+    if mc.objExists(exportGrp) : 
+        mc.select(exportGrp) 
+        result = mc.gpuCache(exportGrp, 
+                                startTime = startFrame, 
+                                endTime = endFrame, 
+                                optimize = True, 
+                                optimizationThreshold = 40000, 
+                                writeMaterials = True, 
+                                dataFormat = 'ogawa', 
+                                directory = exportPath, 
+                                fileName = abcName, 
+                                saveMultipleFiles = False
+                                )
+
+        gpupath = '%s/%s.abc' % (exportPath,abcName)
 
         return result 
