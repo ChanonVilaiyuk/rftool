@@ -12,6 +12,10 @@ maya = '%s/icons/%s' % (iconPath, 'maya_icon.png')
 camera = '%s/icons/%s' % (iconPath, 'camera_icon.png')
 cameraNa = '%s/icons/%s' % (iconPath, 'cameraNa_icon.png')
 noimg = '%s/icons/%s' % (iconPath, 'tmp_thumbnail.jpg')
+nopreview = '%s/icons/%s' % (iconPath, 'nopreview_icon.png')
+gear = '%s/icons/%s' % (iconPath, 'gear_icon.gif')
+success = '%s/icons/%s' % (iconPath, 'success_icon.gif')
+failed = '%s/icons/%s' % (iconPath, 'failed_icon.gif')
 
 # sg
 sgWtg = '%s/icons/%s' % (iconPath, 'wtg_icon.png')
