@@ -88,7 +88,7 @@ def get_assets(project, filters=None):
 def get_one_asset(project,assetName):
 	filters = [ ['project.Project.name','is',project],
 				['code','is',assetName] ]
-	fields = ['code', 'sg_asset_type', 'sg_subtype', 'sg_episodes']
+	fields = ['code', 'sg_asset_type', 'sg_subtype', 'sg_episodes', 'project']
 	return sg.find_one('Asset',filters,fields)
 
 def get_step():
@@ -193,6 +193,9 @@ def link_local_user(userId, localUser):
 def set_task_status(taskId, status):
 	return sg.update('Task', taskId, {'sg_status_list': status})
 
+def set_task_data(taskId, data): 
+	return sg.update('Task', taskId, data)
+
 def set_entity_status(entity, entityId, status):
 	return sg.update(entity, entityId, {'sg_status_list': status})
 
@@ -209,6 +212,14 @@ def update_subasset_list(id, entities, sg_field='assets'):
 		updateEntities = updateEntities + currentEntities.get('assets')
 	data = {sg_field: updateEntities}
 	return sg.update('Asset', id, data)
+
+def upload_version_media(versionEntity, media) : 
+	# upload media 
+	media = media.replace('/', '\\')
+	mediaResult = sg.upload('Version', versionEntity['id'], media, 'sg_uploaded_movie')
+	# logger.debug('Upload media %s' % mediaResult)
+
+	return mediaResult
 ########################### Other ###########################
 
 def add_list_field(name, field) :
@@ -270,3 +281,29 @@ def taskFields(entityType) :
 		fields = fields + shotFields
 	return fields
 
+
+def publish_version(projectEntity, entity, taskEntity, userEntity, versionName, status, description, playlistEntity) : 
+	# create version 
+
+	playlists = []
+	data = { 'project': projectEntity,
+			 'code': versionName,
+			 'entity': entity,
+			 'sg_task': taskEntity,
+			 'sg_status_list': status, 
+			 'description' : description}
+
+	if userEntity : 
+		data.update({'user': userEntity})
+
+	if playlistEntity: 
+		playlists.append(playlistEntity)
+		
+	if playlists: 
+		data.update({'playlists': playlists})
+	
+	# create version 
+	versionEntity = sg.create('Version', data)
+	logger.debug('Version %s' % versionEntity)
+
+	return versionEntity

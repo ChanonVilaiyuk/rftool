@@ -9,7 +9,9 @@ module_dir  = os.path.dirname(module_path)
 
 import status_config
 from rftool.utils import sg_process
+from rftool.utils import icon
 import grab_screen
+import tempfile
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,6 +46,11 @@ class StatusWidget(QtWidgets.QWidget) :
             self.widget.setItemIcon(i, icon)
             self.widget.setItemData(i, status, QtCore.Qt.UserRole)
 
+    def get_task_status(self): 
+        itemData = self.widget.itemData(self.widget.currentIndex(), QtCore.Qt.UserRole)
+        return itemData
+
+
 
 class TaskWidget(QtWidgets.QWidget) :
     def __init__(self, parent=None) :
@@ -57,7 +64,7 @@ class TaskWidget(QtWidgets.QWidget) :
 
         self.caches = dict()
 
-    def set_task_status(self, mode, project, entity, filter1=str(), filter2=str(), step=None, setBlank=True):
+    def set_task(self, mode, project, entity, filter1=str(), filter2=str(), step=None, setBlank=True):
         self.widget.clear()
         filters = []
         fields = ['content', 'entity', 'id', 'sg_status_list']
@@ -96,6 +103,11 @@ class TaskWidget(QtWidgets.QWidget) :
                 for row, task in enumerate(tasks):
                     self.widget.addItem(task.get('content'))
                     self.widget.setItemData((row+firstItem), task, QtCore.Qt.UserRole)
+
+    def get_task(self): 
+        itemData = self.widget.itemData(self.widget.currentIndex(), QtCore.Qt.UserRole)
+        return itemData
+
 
 
 class UserWidget(QtWidgets.QWidget) :
@@ -263,6 +275,118 @@ class SnapImageWidget(QtWidgets.QWidget) :
         self.itemClicked.emit(data)
 
 
+class SnapImageMayaWidget(QtWidgets.QWidget) :
+    """ department comboBox """
+    itemClicked = QtCore.Signal(str)
+    snapped = QtCore.Signal(str)
+
+
+    def __init__(self, formats, snapFormat, imgDst=None, parent=None) :
+        super(SnapImageMayaWidget, self).__init__(parent)
+        self.allLayout = QtWidgets.QVBoxLayout()
+
+        self.widget = DropUrlListWidget()
+        self.widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        self.button = QtWidgets.QPushButton()
+        self.allLayout.addWidget(self.widget)
+        self.allLayout.addWidget(self.button)
+        self.allLayout.setSpacing(2)
+        self.allLayout.setContentsMargins(2, 2, 2, 2)
+        self.setLayout(self.allLayout)
+
+        self.formats = formats
+        self.snapFormat = snapFormat
+
+        self.button.setText('Snap Screen')
+
+        self.widget.dropped.connect(self.display)
+        self.widget.itemSelectionChanged.connect(self.call_back)
+        self.button.clicked.connect(self.snap)
+        self.widget.customContextMenuRequested.connect(self.context_menu)
+
+    def display(self, urls):
+        """ display path """
+        for url in urls:
+            if os.path.splitext(url)[-1] in self.formats:
+                item = QtWidgets.QListWidgetItem(self.widget)
+                item.setText(os.path.basename(url))
+                item.setData(QtCore.Qt.UserRole, url)
+                self.widget.setCurrentItem(item)
+
+            else:
+                QtWidgets.QMessageBox.warning(self, 'Warning', 'Please drop only %s file' % str(self.formats))
+
+    def call_back(self):
+        item = self.widget.currentItem()
+        data = icon.nopreview
+
+        if item: 
+            data = item.data(QtCore.Qt.UserRole)
+        
+        self.itemClicked.emit(data)
+
+    def snap(self): 
+        tempDir = tempfile.gettempdir()
+        from rftool.utils import maya_utils
+        dst = self.snap_sequence()
+        format = self.snapFormat
+        st = maya_utils.mc.currentTime(q=True)
+        sequencer = False
+        w = 1280
+        h = 1024
+
+        maya_utils.capture_screen(dst, format, st, sequencer, w, h)
+        logger.debug('snapped %s' % dst)
+        self.display([dst])
+        # self.snapped.emit(dst)
+
+    def snap_sequence(self): 
+        tempDir = tempfile.gettempdir()
+
+        if self.widget.count() > 0: 
+            filenames = [str(self.widget.item(row).text()) for row in range(self.widget.count())]
+            versions = [int(a.split('_')[-1].split('.')[0]) for a in filenames]
+            nextVersion = sorted(versions)[-1] + 1
+            snapName = 'snap_%03d.%s' % (nextVersion, self.snapFormat)
+
+        else: 
+            snapName = 'snap_001.%s' % self.snapFormat
+
+        snapPath = '%s/%s' % (tempDir, snapName)
+        return snapPath
+
+
+    def context_menu(self, pos): 
+        menu = QtWidgets.QMenu(self)
+        currentItem = self.widget.currentItem()
+
+        if currentItem:
+            # basic menu 
+            itemAction = menu.addAction('Remove')
+            itemAction.triggered.connect(self.remove_item)
+        
+        defaultAction = menu.addAction('Clear All')
+        defaultAction.triggered.connect(self.remove_all_items)
+
+        menu.popup(self.widget.mapToGlobal(pos))
+
+    def remove_item(self): 
+        self.widget.takeItem(self.widget.currentRow())
+
+    def remove_all_items(self): 
+        self.widget.clear()
+        self.call_back()
+
+    def get_all_items(self): 
+        items = [self.widget.item(a) for a in range(self.widget.count())]
+        return items
+
+    def get_all_paths(self): 
+        items = [a.data(QtCore.Qt.UserRole) for a in self.get_all_items()]
+        return items
+
+
 class SnapSingleImageWidget(QtWidgets.QWidget) :
     """ department comboBox """
     snapped = QtCore.Signal(str)
@@ -300,6 +424,156 @@ class SnapSingleImageWidget(QtWidgets.QWidget) :
         self.previewLabel.setPixmap(QtGui.QPixmap(img).scaled(self.w, self.h, QtCore.Qt.KeepAspectRatio))
         self.previewFile = img
         self.snapped.emit(img)
+
+
+class PublishListWidget(QtWidgets.QWidget) :
+    """ custom listwidget for publish """
+    currentItemChanged = QtCore.Signal(object)
+
+
+    def __init__(self, parent=None) :
+        super(PublishListWidget, self).__init__(parent)
+        self.allLayout = QtWidgets.QVBoxLayout()
+
+        self.label = QtWidgets.QLabel()
+        self.listWidget = QtWidgets.QListWidget()
+        self.listWidget.currentItemChanged.connect(self.call_back)
+
+        self.allLayout.addWidget(self.label)
+        self.allLayout.addWidget(self.listWidget)
+        self.allLayout.setSpacing(2)
+        self.allLayout.setContentsMargins(2, 2, 2, 2)
+        self.setLayout(self.allLayout)
+
+    def add_item(self, display, description=None, data=None, iconPath=None, checkStateEnable=True): 
+        item = QtWidgets.QListWidgetItem(self.listWidget)
+        itemWidget = PublishListWidgetItem()
+        itemWidget.set_text(display)
+
+        if description: 
+            itemWidget.set_description(description)
+
+        if data: 
+            item.setData(QtCore.Qt.UserRole, data)
+
+        if iconPath: 
+            iconWidget = QtGui.QIcon()
+            iconWidget.addPixmap(QtGui.QPixmap(iconPath), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            item.setIcon(iconWidget)
+
+        itemWidget.set_check_state(checkStateEnable)
+
+
+        self.listWidget.addItem(item)
+        self.listWidget.setItemWidget(item, itemWidget)
+        item.setSizeHint(itemWidget.sizeHint())
+
+        return item 
+
+    def set_item_status(self, item, status): 
+        widget = self.listWidget.itemWidget(item)
+        
+        if status == 'ready': 
+            widget.set_movie(icon.gear)
+            widget.start_movie()
+            widget.stop_movie()
+
+        if status == 'ip': 
+            widget.set_movie(icon.gear)
+            widget.start_movie()
+
+        if status == True: 
+            widget.set_movie(icon.success)
+            widget.start_movie()
+
+        if status == False or not status: 
+            widget.set_movie(icon.failed)
+            widget.start_movie()
+
+
+    def call_back(self, item): 
+        self.currentItemChanged.emit(item)
+
+
+class PublishListWidgetItem(QtWidgets.QWidget) :
+    def __init__(self, parent = None) :
+        super(PublishListWidgetItem, self).__init__(parent)
+        # set label
+        self.allLayout = QtWidgets.QHBoxLayout()
+        self.textLabel = QtWidgets.QLabel()
+        self.descriptionLabel = QtWidgets.QLabel()
+        self.descriptionLabel.setStyleSheet('color: rgb(%s, %s, %s);' % (100, 100, 100))
+
+        # checkBox 
+        self.checkBox = QtWidgets.QCheckBox()
+        self.checkBox.setCheckState(QtCore.Qt.Checked)
+
+        # set icon
+        self.iconQLabel = QtWidgets.QLabel()
+
+        self.spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+
+        self.allLayout.addWidget(self.checkBox, 0, 0)
+        self.allLayout.addWidget(self.iconQLabel, 0, 1)
+        self.allLayout.addWidget(self.textLabel, 0, 2)
+        self.allLayout.addWidget(self.descriptionLabel, 2, 3)
+        self.allLayout.addItem(self.spacerItem)
+
+        self.allLayout.setContentsMargins(2, 2, 2, 2)
+        self.setLayout(self.allLayout)
+
+        # set font 
+        font = QtGui.QFont()
+        font.setPointSize(9)
+        font.setItalic(True)
+        self.descriptionLabel.setFont(font)
+
+
+    def set_text(self, text) :
+        self.textLabel.setText(text)
+
+    def set_description(self, text) :
+        self.descriptionLabel.setText(text)
+
+    def set_icon(self, iconPath, size = 16) :
+        self.iconQLabel.setPixmap(QtGui.QPixmap(iconPath).scaled(size, size, QtCore.Qt.KeepAspectRatio))
+
+    def set_movie(self, iconPath): 
+        movie = QtGui.QMovie(iconPath)
+        self.iconQLabel.setMovie(movie)
+        movie.start()
+        movie.stop()
+
+    def set_text_color(self, color) :
+        self.textLabel.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
+
+    def text(self) :
+        return self.textLabel.text()
+
+    def description(self) :
+        return self.descriptionLabel.text()
+
+    def start_movie(self): 
+        movie = self.iconQLabel.movie()
+        movie.start()
+
+    def stop_movie(self): 
+        movie = self.iconQLabel.movie()
+        movie.stop()
+
+    def set_check(self, state): 
+        if state: 
+            self.checkBox.setCheckState(QtCore.Qt.Checked)
+
+        else: 
+            self.checkBox.setCheckState(QtCore.Qt.UnChecked)
+
+    def get_checked_state(self): 
+        return self.checkBox.isChecked()
+
+    def set_check_state(self, state): 
+        self.checkBox.setEnabled(state)
+
 
 
 class DropUrlLineEdit(QtWidgets.QLineEdit):

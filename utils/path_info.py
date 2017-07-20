@@ -183,6 +183,15 @@ class PathInfo(object):
             path = os.path.splitext(self.filename)[0]
         return path
 
+    def task_res(self): 
+        if self.task: 
+            res = self.task.split('_')[-1]
+            if res in config.res: 
+                return res 
+
+    def file_res(self): 
+        return guess_res(self.filename)
+
     @property
     def taskName(self):
         versionKey = '_v'
@@ -191,7 +200,7 @@ class PathInfo(object):
         else:
             task = self.filename.split('.')[0].replace('%s_' % self.name, '')
 
-        self.task = task
+        # self.task = task
         return task
 
     @property
@@ -202,6 +211,10 @@ class PathInfo(object):
             return name
         else:
             return os.path.basename(self.path).split('.')[0]
+
+    @property
+    def fileVersion(self): 
+        return 'v{0}'.format(self.versionName.split('v')[-1])
 
     @property
     def fileUser(self):
@@ -300,9 +313,20 @@ class PathInfo(object):
         projRoot = os.environ.get(root, '')
         return '{0}/{1}/{2}/{3}/{4}/{5}/{6}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, config.media)
 
+    def dataPath(self, root='RFPUBL'): 
+        projRoot = os.environ.get(root, '')
+        return '{0}/_data'.format(self.entityPath())
+
     @property
     def mediaFile(self): 
         return '{0}/{1}.{2}'.format(self.mediaPath(), self.name, config.stillExt)
+
+    def dataFile(self, version=None): 
+        if version: 
+            return '{0}/{1}_{2}_info.{3}'.format(self.dataPath(), self.name, version, config.dataExt)
+        return '{0}/{1}_info.{2}'.format(self.dataPath(), self.name, config.dataExt)
+
+
 
     def workspaceDir(self, root='RFPROJECT'):
         return config.workDir.get(root, '')
@@ -333,9 +357,10 @@ class PathInfo(object):
 
         return '_'.join(nameEles)
 
-    def libName(self, step, res, project=True, ext=None):
+    def libName(self, step, res, project=False, ext=None):
         elems = [(self.assetName(project=project))]
-        ext = config.refExt
+        if not ext: 
+            ext = config.refExt
 
         if step:
             elems.append(step)
@@ -376,6 +401,55 @@ class PathInfo(object):
             return '_'.join(nameElems)
         else:
             return self.sequence
+
+    # publish 
+    def publishPath(self, root='RFPUBL', relativePath=False, publish='file'):
+        projRoot = os.environ.get(root, '')
+        if relativePath:
+            projRoot = '$%s' % (root)
+        if publish == 'file': 
+            workspace = self.workspaceDir(root)
+        if publish == 'img': 
+            workspace = config.publishImgDir
+        if publish == 'mov': 
+            workspace = config.publishMovDir
+        if publish == 'data': 
+            workspace = config.publishData
+
+        return '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, self.step, self.activeApp, workspace)
+
+
+    def publishFile(self, root='RFPUBL', entity='asset', relativePath=False, checkVersion=True): 
+        projRoot = os.environ.get(root, '')
+        if relativePath:
+            projRoot = '$%s' % (root)
+
+        if self.task: 
+            task = self.task 
+
+        else: 
+            task = self.taskName 
+
+        if entity == 'asset': 
+
+            publishPath = self.publishPath(root=root, relativePath=relativePath)
+            basename = '{0}_{1}'.format(self.name, self.task)
+            publishFileVersion = '{0}/{1}_{2}.{3}'.format(publishPath, basename, self.fileVersion, config.refExt)
+            
+            if checkVersion: 
+                publishFileVersion = getNextVersion(publishFileVersion)
+
+        return publishFileVersion
+
+
+    def publishName(self, version=None, ext=False): 
+        base = '{0}_{1}'.format(self.name, self.task)
+        if version: 
+            base = '{0}_{1}'.format(base, version)
+        if ext: 
+            base = '{0}.{1}'.format(base, config.refExt)
+        return base
+
 
 def convertAbs(path):
     if '$RFPROJECT' in path:
@@ -424,7 +498,65 @@ def guess_res(filename):
                 return each
 
 def listFile(path):
-    return [a for a in os.listdir(path) if os.path.isfile(os.path.join(path, a))]
+    files = []
+    if os.path.exists(path): 
+        files = [a for a in os.listdir(path) if os.path.isfile(os.path.join(path, a))]
+    
+    return files 
+
+
+def getNextVersion(fileName): 
+    files = listFile(os.path.dirname(fileName))
+    basename = os.path.basename(fileName)
+    basenameFiles = [a for a in files if basename in a]
+
+    if not basenameFiles: 
+        return fileName 
+
+    version = find_version(fileName)
+    newVersion = find_next_version(basenameFiles)
+
+    if not version == newVersion: 
+        return fileName.replace(version, newVersion)
+
+    else: 
+        return fileName
+
+
+def find_next_version(files):
+    vers = sorted([int(find_version(a).replace('v', '') if find_version(a) else 0) for a in files])
+
+    if vers:
+        newVer = vers[-1] + 1
+        return 'v%03d' % newVer
+
+    return 'v001'
+
+def find_max_version(files):
+    vers = sorted([int(find_version(a).replace('v', '') if find_version(a) else 0) for a in files])
+
+    if vers:
+        newVer = vers[-1]
+        return 'v%03d' % newVer
+
+    else: 
+        return ''
+
+def find_version(filename, prefix='v', padding=3):
+    filename = os.path.splitext(filename)[0]
+    elems = filename.split('_')
+    for elem in elems:
+        if elem[0] == prefix and elem[1:].isdigit():
+            return elem
+
+
+def replace_file_version(filename, version, prefix='v', padding=3): 
+    currentVersion = find_version(filename, prefix='v', padding=3)
+    return filename.replace(currentVersion, version)
+
+
+
+
 
 
 # example

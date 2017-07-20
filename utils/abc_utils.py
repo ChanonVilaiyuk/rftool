@@ -1,5 +1,7 @@
 import sys
 import os
+import maya.cmds as mc 
+import maya.mel as mm
 
 """ Alembic Sections """
 def exportABC(obj, path) :

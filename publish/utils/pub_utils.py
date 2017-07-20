@@ -17,8 +17,8 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-RFWORK = config.rootWork
-RFPUBL = config.rootPubl
+RFWORK = os.environ['RFPROJECT'].replace('\\', '/')
+RFPUBL = os.environ['RFPUBL'].replace('\\', '/')
 
 
 def copy_media_version(prod_dir='',publ_dir='',versionName=''):
@@ -341,4 +341,67 @@ def remove_version(filename, key, padding):
         output = filename.replace(versionKey, '')
         logger.debug('removed file name %s -> %s' % (filename, output))
         return output
+
+
+def get_publish_info(entity=None): 
+    """ publish asset info """ 
+    # normal steps 
+    # save -> copy publish -> increment 
+    # short steps, save only once to save time
+    # save increment -> copy publish (v-1) -> copy 
+
+    if not entity: 
+        entity = path_info.PathInfo()
+
+    sourceFile = entity.path 
+    srcVersion = path_info.find_version(sourceFile)
+    
+    publishDir = entity.publishPath()
+    publishName = entity.publishName(srcVersion, ext=True)
+    publishFile = '{0}/{1}'.format(publishDir, publishName)
+
+    saveWorkFile = sourceFile
+
+    # condition 1 pub version exists 
+    if os.path.exists(publishFile): 
+
+        # find next available version 
+        pubDirMax = path_info.find_next_version(path_info.listFile(publishDir))
+        workDirMax = path_info.find_next_version(path_info.listFile(os.path.dirname(sourceFile)))
+
+        # good both version
+        if pubDirMax == workDirMax: 
+            maxVersion = pubDirMax
+
+        # user higher 
+        else: 
+            maxVersion = 'v%03d' % max(int(pubDirMax.replace('v', '')), int(workDirMax.replace('v', '')))
+
+        publishFile = '{0}/{1}'.format(publishDir, entity.publishName(maxVersion, ext=True))
+        saveWorkFile = path_info.replace_file_version(sourceFile, maxVersion)
+
+    # increment
+    pubVersion = path_info.find_version(publishFile)
+    workIncrementVersion = 'v%03d' % (int(pubVersion.replace('v', '')) + 1)
+    incrementSaveWorkFile = path_info.replace_file_version(sourceFile, workIncrementVersion)
+
+    return publishFile, saveWorkFile, incrementSaveWorkFile
+
+
+def file_time(filePath): 
+    mtime = 0.00
+    if os.path.exists(filePath): 
+        mtime = os.path.getmtime(filePath)
+
+    return mtime
+
+def is_file_new(startFileTime, endFileTime): 
+    logger.debug('endFileTime, startFileTime')
+    logger.debug('%s %s' % (endFileTime, startFileTime))
+    if endFileTime > startFileTime: 
+        return True 
+
+    else: 
+        return False 
+
 
