@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AssetMoverUI</class>
+ <widget class="QMainWindow" name="AssetMoverUI">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>786</width>
+    <height>574</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QGridLayout" name="gridLayout_3" columnstretch="2,4,1,2,1,2,0,1,1,2">
+      <item row="1" column="0" colspan="10">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="4">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Dept: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="5">
+       <widget class="QComboBox" name="dept_comboBox"/>
+      </item>
+      <item row="2" column="3">
+       <widget class="QComboBox" name="res_comboBox"/>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="project_comboBox"/>
+      </item>
+      <item row="0" column="2">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="2" column="9">
+       <widget class="QPushButton" name="listAsset_pushButton">
+        <property name="text">
+         <string>List Assets</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="7">
+       <widget class="QRadioButton" name="server_radioButton">
+        <property name="text">
+         <string>Server</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Project : </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="8">
+       <widget class="QRadioButton" name="shotgun_radioButton">
+        <property name="text">
+         <string>Shotgun</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Res : </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="6">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTableWidget" name="tableWidget"/>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,2,0,1,1,2">
+      <item>
+       <widget class="QCheckBox" name="selectAll_checkBox">
+        <property name="text">
+         <string>Select All Ready</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="maya_checkBox">
+        <property name="text">
+         <string>User Maya Session</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox">
+        <property name="text">
+         <string>Copy to lib</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_2">
+        <property name="text">
+         <string>Copy to work</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="move_pushButton">
+        <property name="text">
+         <string>Move Assets</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>786</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
