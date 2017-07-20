@@ -5,21 +5,23 @@ from Qt import QtCore
 from Qt import QtWidgets
 from Qt import QtUiTools
 from Qt import QtCompat
+QtUiTools = QtUiTools()
 
-# def loadUI(uiFile, parent): 
-#     """ Qt Module to load .ui file """ 
-#     # read .ui directly
-#     moduleDir = os.path.dirname(uiFile)
-#     loader = QtUiTools.QUiLoader()
-#     loader.setWorkingDirectory(moduleDir)
+def loadUIMaya(uiFile, parent): 
+    """ Qt Module to load .ui file """ 
+    # read .ui directly
 
-#     f = QtCore.QFile(uiFile)
-#     f.open(QtCore.QFile.ReadOnly)
+    moduleDir = os.path.dirname(uiFile)
+    loader = QtUiTools.QUiLoader()
+    loader.setWorkingDirectory(moduleDir)
 
-#     myWidget = loader.load(f, parent)
-#     f.close()
+    f = QtCore.QFile(uiFile)
+    f.open(QtCore.QFile.ReadOnly)
 
-#     return myWidget
+    myWidget = loader.load(f, parent)
+    f.close()
+
+    return myWidget
 
 
 def loadUI(uifile, base_instance=None):
