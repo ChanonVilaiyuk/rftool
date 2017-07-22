@@ -53,7 +53,7 @@ class TaskInfo(object):
         self.dataExt = 'yml'
         self.primaryKey = ['work', 'primaryOutput', 'secondaryOutput', 'shotgun', 'taskName']
         self.secondaryKey = ['workfile', 'incrementWorkFile', 'publishFile', 'publishImgFiles', 'publishMovFiles', 
-                            'heroImgFile', 'heroMovFile', 'previewFile', 'abc', 'project_entity', 
+                            'heroImgFile', 'heroFile', 'heroMovFile', 'previewFile', 'abc', 'abcHero', 'project_entity', 
                             'asset_entity', 'task_entity', 'task_status', 'version_entity', 
                             'version_status']
 
@@ -202,9 +202,6 @@ class AssetInfo(object):
         self.templateDict['asset'] = self.entity.name
         self.templateDict['assetType'] = self.entity.type
         self.templateDict['assetSubType'] = self.entity.subtype
-        self.templateDict['assetID'] = 0
-        self.templateDict['assetType'] = self.entity.type
-        self.templateDict['assetType'] = self.entity.type
 
 
 def ymlDumper(file, dictData) :
