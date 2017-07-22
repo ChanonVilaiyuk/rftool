@@ -385,7 +385,12 @@ def get_publish_info(entity=None):
     workIncrementVersion = 'v%03d' % (int(pubVersion.replace('v', '')) + 1)
     incrementSaveWorkFile = path_info.replace_file_version(sourceFile, workIncrementVersion)
 
-    return publishFile, saveWorkFile, incrementSaveWorkFile
+    # hero 
+    libPath = entity.libPath()
+    libName = entity.libName(entity.step, entity.task_res(), ext=entity.ext)
+    libFile = '{0}/{1}'.format(libPath, libName)
+
+    return publishFile, saveWorkFile, incrementSaveWorkFile, libFile
 
 
 def file_time(filePath): 
