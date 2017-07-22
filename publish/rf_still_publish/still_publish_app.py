@@ -184,6 +184,10 @@ class RFStillPublish(QtWidgets.QMainWindow):
         self.forcePublishCheckBox = QtWidgets.QCheckBox()
         self.forcePublishCheckBox.setText('Force error publish')
 
+        # file publish 
+        self.filePublishCheckBox = QtWidgets.QCheckBox()
+        self.filePublishCheckBox.setText('File Publish')
+
         # debug checkBox
         self.debugCheckBox = QtWidgets.QCheckBox()
         self.debugCheckBox.setText('Debug')
@@ -208,9 +212,11 @@ class RFStillPublish(QtWidgets.QMainWindow):
         self.ui.header_horizontalLayout.setStretch(1, 1)
         self.ui.header_horizontalLayout.setStretch(2, 0)
 
+        self.ui.snap_verticalLayout.addWidget(self.filePublishCheckBox, 0, 0)
         self.ui.snap_verticalLayout.addWidget(self.snapWidget)
-        self.ui.snap_verticalLayout.setStretch(0, 0)
-        self.ui.snap_verticalLayout.setStretch(1, 3)
+        self.ui.snap_verticalLayout.setStretch(1, 0)
+        self.ui.snap_verticalLayout.setStretch(2, 0)
+        self.ui.snap_verticalLayout.setStretch(3, 3)
         # self.ui.snap_verticalLayout.setStretch(2, 1)
 
         self.ui.horizontalLayout_3.addWidget(self.sourceFileWidget)
@@ -262,6 +268,9 @@ class RFStillPublish(QtWidgets.QMainWindow):
         self.ui.asset_radioButton.clicked.connect(partial(self.mode_change, 'Asset'))
         self.ui.scene_radioButton.clicked.connect(partial(self.mode_change, 'Shot'))
 
+        # status signal 
+        self.statusWidget.widget.currentIndexChanged.connect(self.status_signal)
+
         # snapWidget
         self.snapWidget.itemClicked.connect(lambda x: self.set_preview(x, 600, 400))
 
@@ -273,6 +282,9 @@ class RFStillPublish(QtWidgets.QMainWindow):
 
         # publish detail signal 
         self.publishWidget.currentItemChanged.connect(self.set_func_description)
+
+        # file Publish signal. checkBox to export file or just review
+        self.filePublishCheckBox.stateChanged.connect(self.load_publish_list)
 
         # source version / task change 
         self.sourceFileWidget.widget.returnPressed.connect(self.set_publish_version)
@@ -324,19 +336,27 @@ class RFStillPublish(QtWidgets.QMainWindow):
 
     # publish parts 
     def load_publish_list(self): 
-        publDict = publish_core.load_publish_list(self.pathInfo)
+        filePublish = self.filePublishCheckBox.isChecked()
+        preset = 'wip'
+        if filePublish: 
+            preset = 'filePublish'
+
+        publDict = publish_core.load_publish_list(self.pathInfo, preset)
+        self.publishWidget.listWidget.clear()
 
         if publDict: 
             pubFunc, publList = publDict['publ']
             deptFunc, deptPublList = publDict['deptPubl']
             precheckFunc, precheckList = publDict['precheckList']
             sg_publish, sgPublList = publDict['sgPubls']
+            post_publish, postPublList = publDict['postPubl']
 
             # pass ui object to other funcs
             pubFunc.ui = self
             precheckFunc.ui = self
             deptFunc.ui = self
             sg_publish.ui = self
+            post_publish.ui = self
 
             status = True
 
@@ -367,6 +387,13 @@ class RFStillPublish(QtWidgets.QMainWindow):
                 data = {'func': func, 'status': status, 'message': message}
                 item = self.publishWidget.add_item(display, data=data, description='shotgun', checkStateEnable=True)
                 self.publishWidget.set_item_status(item, 'ready')
+
+            for publ in postPublList: 
+                display, func = publ
+                message = func.__doc__
+                data = {'func': func, 'status': status, 'message': message}
+                item = self.publishWidget.add_item(display, data=data, description='postPublish', checkStateEnable=True)
+                self.publishWidget.set_item_status(item, 'ready')
             # self.publishWidget.listWidget.add_item(deptPublList)
 
 
@@ -382,13 +409,28 @@ class RFStillPublish(QtWidgets.QMainWindow):
             entity = path_info.PathInfo(source)
             entity.task = task.get('content')
 
-            publishFile, saveWorkFile, incrementSaveWorkFile = pub_utils.get_publish_info(entity)
+            publishFile, saveWorkFile, incrementSaveWorkFile, libFile = pub_utils.get_publish_info(entity)
             self.publishVersionLabel.setText(publishFile)
 
             # set entity from source **
             self.pathInfo = path_info.PathInfo(source)
             
             logger.debug('version %s' % os.path.basename(publishFile))
+
+
+    def status_signal(self): 
+        """ signal from changing status """ 
+        status = self.statusWidget.get_task_status()
+        filePublish = True
+        if status in publish_core.filePublishPreset.keys(): 
+            filePublish = publish_core.filePublishPreset[status]
+
+        if filePublish: 
+            self.filePublishCheckBox.setEnabled(False)
+            self.filePublishCheckBox.setChecked(True)
+        else: 
+            self.filePublishCheckBox.setEnabled(True)
+            self.filePublishCheckBox.setChecked(False)
 
 
     def set_debug(self, state): 
