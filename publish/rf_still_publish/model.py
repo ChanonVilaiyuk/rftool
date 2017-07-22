@@ -5,8 +5,11 @@ logger = logging.getLogger(__name__)
 
 import maya.cmds as mc 
 from rftool.utils import maya_utils
+from rftool.utils import path_info
+from rftool.utils import file_utils
 from rftool.utils import abc_utils
 from rftool.publish.utils import pub_utils
+from rftool.publish.utils import publish_info
 from startup import config
 reload(maya_utils)
 reload(config)
@@ -21,6 +24,7 @@ def export_abc(entity=None):
 	exportGrp = config.geoGrp
 	res = entity.task_res()
 	libPath = entity.libPath()
+	publishResult = False
 
 	if res: 
 		abcModel = entity.libName(entity.step, res, ext='abc')
@@ -34,10 +38,36 @@ def export_abc(entity=None):
 
 		# check file export success 
 		end = pub_utils.file_time(exportPath)
-		success = pub_utils.is_file_new(start, end)
+		exportResult = pub_utils.is_file_new(start, end)
 
-		if success: 
-			return True, 'Success %s' % exportPath
+		# write info 
+		if ui: 
+			publishFile = str(ui.publishVersionLabel.text())
+			pubEntity = path_info.PathInfo(publishFile)
+
+			# publish 
+			publishPath = pubEntity.publishPath(publish='output')
+			publishName = pubEntity.basename(ext=False)
+			publishFileName = '%s/%s' % (publishPath, publishName)
+			file_utils.copy(exportPath, publishFileName)
+
+			if os.path.exists(publishFileName): 
+				publishResult = True
+
+			# write info 
+			info = publish_info.TaskInfo(pubEntity)
+			info.set('secondaryOutput', 'abc', publishFileName)
+			info.set('secondaryOutput', 'abcHero', exportPath)
+			# successPublishFile = info.get('primaryOutput', 'publishFile')
+			
+
+
+		if exportResult: 
+			if publishResult: 
+				return True, 'Success %s\n%s' % (exportPath, publishFileName)
+			
+			else: 
+				return False, 'Failed to publish %s' % publishFileName
 
 		else: 
 			return False, 'Failed to export Alembic %s' % exportPath
