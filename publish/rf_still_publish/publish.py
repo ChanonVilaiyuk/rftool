@@ -25,7 +25,7 @@ def publish_file(entity=None):
 		logger.debug('start publishing ...')
 
 		# get publish info 
-		publishFile, saveWorkFile, incrementSaveWorkFile = pub_utils.get_publish_info(entity)
+		publishFile, saveWorkFile, incrementSaveWorkFile, libFile = pub_utils.get_publish_info(entity)
 		
 		logger.debug('save work file %s' % saveWorkFile)
 		logger.debug('publish version %s' %  publishFile)
@@ -48,6 +48,10 @@ def publish_file(entity=None):
 			# copy to publish 
 			publishResult = file_utils.copy(saveResult, publishFile)
 			info.set('primaryOutput', 'publishFile', publishFile)
+			
+			# copy to hero 
+			publishHeroResult = file_utils.copy(saveResult, libFile)
+			info.set('primaryOutput', 'heroFile', libFile)
 
 			# copy to current work version (short cut for overwritten save)
 			workResult = file_utils.copy(saveResult, saveWorkFile)
@@ -61,6 +65,10 @@ def publish_file(entity=None):
 		if not publishResult: 
 			logger.error('Publish to %s has failed' % publishFile)
 			errorMessage.append('Publish to %s has failed' % publishFile)
+
+		if not publishHeroResult: 
+			logger.error('Publish to hero %s has failed' % libFile)
+			errorMessage.append('Publish to %s has failed' % libFile)
 
 		if not workResult: 
 			logger.error('Overwrite work version %s has failed' % saveWorkFile)
@@ -88,7 +96,8 @@ def publish_image(entity=None):
 		publishFile = str(ui.publishVersionLabel.text())
 		pubEntity = path_info.PathInfo(publishFile)
 		info = publish_info.TaskInfo(pubEntity)
-		successPublishFile = info.get('primaryOutput', 'publishFile')
+		# successPublishFile = info.get('primaryOutput', 'publishFile')
+		successPublishFile = publishFile
 
 		# if publish success 
 		if successPublishFile: 
@@ -185,9 +194,54 @@ def publish_image(entity=None):
 	else: 
 		return True, 'Success \n%s' % imgPublishes
 
-	# 
-	# print items
 
-# publish logic
 
-# work 
+
+def save_file(entity=None): 
+	""" save increment file to lock wip version """
+	errorMessage = []
+	
+	if not entity: 
+		entity = path_info.PathInfo()
+
+	if entity: 
+		logger.debug('start publishing ...')
+
+		# get publish info 
+		publishFile, saveWorkFile, incrementSaveWorkFile, libFile = pub_utils.get_publish_info(entity)
+		
+		logger.debug('save work file %s' % saveWorkFile)
+		logger.debug('publish version %s' %  publishFile)
+		logger.debug('save increment work file %s' % incrementSaveWorkFile)
+
+		# start process files 
+		saveResult = None
+		workResult = None
+
+		# publish info 
+		pubEntity = path_info.PathInfo(publishFile)
+		info = publish_info.TaskInfo(pubEntity)
+
+		# save as
+		saveResult = hook.save_file_as(incrementSaveWorkFile)
+		info.set('work', 'incrementWorkFile', incrementSaveWorkFile)
+
+		if saveResult: 
+			# copy to current work version (short cut for overwritten save)
+			workResult = file_utils.copy(saveResult, saveWorkFile)
+			info.set('work', 'workfile', saveWorkFile)
+
+
+		if not saveResult: 
+			logger.error('Save to %s has failed' % incrementSaveWorkFile)
+			errorMessage.append('Save to %s has failed' % incrementSaveWorkFile)
+
+		if not workResult: 
+			logger.error('Overwrite work version %s has failed' % saveWorkFile)
+			errorMessage.append('Overwrite work version %s has failed' % saveWorkFile)
+
+	if errorMessage: 
+		return False, errorMessage
+
+	else: 
+		return True, 'Success \n%s' % workResult
