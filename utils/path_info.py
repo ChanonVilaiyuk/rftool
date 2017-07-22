@@ -177,6 +177,10 @@ class PathInfo(object):
     def filename(self):
         return os.path.basename(self.path)
 
+    @property
+    def ext(self): 
+        return self.filename.split('.')[-1]
+
     def basename(self, ext=True): 
         path = self.filename
         if not ext: 
@@ -415,6 +419,8 @@ class PathInfo(object):
             workspace = config.publishMovDir
         if publish == 'data': 
             workspace = config.publishData
+        if publish == 'output': 
+            workspace = config.publishOutputDir
 
         return '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}'.format(projRoot, self.project, self.entity, self.type, self.subtype, self.name, self.step, self.activeApp, workspace)
 
