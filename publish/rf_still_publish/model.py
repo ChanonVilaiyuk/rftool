@@ -29,6 +29,7 @@ def export_abc(entity=None):
 	if res: 
 		abcModel = entity.libName(entity.step, res, ext='abc')
 		exportPath = '{0}/{1}'.format(libPath, abcModel)
+		exportExt = os.path.splitext(exportPath)[-1]
 
 		# check file 
 		start = pub_utils.file_time(exportPath)
@@ -48,7 +49,7 @@ def export_abc(entity=None):
 			# publish 
 			publishPath = pubEntity.publishPath(publish='output')
 			publishName = pubEntity.basename(ext=False)
-			publishFileName = '%s/%s' % (publishPath, publishName)
+			publishFileName = '%s/%s%s' % (publishPath, publishName, exportExt)
 			file_utils.copy(exportPath, publishFileName)
 
 			if os.path.exists(publishFileName): 
@@ -106,4 +107,33 @@ def export_gpu(entity=None):
 
 	else: 
 		return False, 'No res found'
+
+
+def publish_geo(entity=None): 
+	""" copy publised model to lib """ 
+	if ui: 
+		publishFile = str(ui.publishVersionLabel.text())
+		pubEntity = path_info.PathInfo(publishFile)
+		info = publish_info.TaskInfo(pubEntity)
+		modelPublish = info.get('primaryOutput', 'publishFile')
+		libPath = entity.libPath()
+		libName = entity.libName(entity.step, entity.task_res(), ext=pubEntity.ext)
+		dst = '{0}/{1}'.format(libPath, libName)
+		
+		# check file 
+		start = pub_utils.file_time(dst)
+		result = file_utils.copy(modelPublish, dst)
+
+		# check file export success 
+		end = pub_utils.file_time(dst)
+		exportResult = pub_utils.is_file_new(start, end)
+
+		if exportResult: 
+			return True, 'Success \n%s' % dst
+
+		else: 
+			return False, 'Failed to copy \n%s' % dst
+
+	else: 
+		return False, 'No ui information.'
 

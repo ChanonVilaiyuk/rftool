@@ -176,7 +176,7 @@ def find_next_version(files):
 
 
 def find_version(filename, prefix='v', padding=3):
-    elems = filename.split('_')
+    elems = filename.split('.')[0].split('_')
     for elem in elems:
         if elem[0] == prefix and elem[1:].isdigit():
             return elem

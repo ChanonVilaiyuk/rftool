@@ -176,6 +176,22 @@ class AssetInfo(object):
         data = ymlLoader(dataFilePath) 
         return data
 
+    def get(self, key1, key2): 
+        data = self.read()
+
+        if key1 in data.keys(): 
+            if key2: 
+                if key2 in data[key1]: 
+                    return data[key1][key2]
+                else: 
+                    logger.debug('key2 not found')
+
+            else: 
+                return data[key1]
+        else: 
+            logger.debug('key1 not found')
+
+
     def setData(self, data): 
         self.fileData = self.read()
         self.fileData.update(data)
@@ -204,17 +220,56 @@ class AssetInfo(object):
         self.templateDict['assetSubType'] = self.entity.subtype
 
 
-def ymlDumper(file, dictData) :
-    # input dictionary data
-    data = yaml.dump(dictData, default_flow_style=False)
-    result = writeFile(file, data)
 
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    class OrderedLoader(Loader):
+        pass
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)
+        return object_pairs_hook(loader.construct_pairs(node))
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        construct_mapping)
+    return yaml.load(stream, OrderedLoader)
+
+
+
+def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
+    class OrderedDumper(Dumper):
+        pass
+    def _dict_representer(dumper, data):
+        return dumper.represent_mapping(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            data.items())
+    OrderedDumper.add_representer(OrderedDict, _dict_representer)
+    return yaml.dump(data, stream, OrderedDumper, **kwds)
+
+
+# def ymlDumper(file, dictData) :
+#     # input dictionary data
+#     data = yaml.dump(dictData, default_flow_style=False)
+#     result = writeFile(file, data)
+
+#     return result
+
+# def ymlLoader(file) :
+#     data = readFile(file)
+#     dictData = yaml.load(data)
+
+#     return dictData
+
+def ymlDumper(filePath, dictData) : 
+    data = ordered_dump(dictData, Dumper=yaml.SafeDumper)
+    # data = yaml.dump(dictData, default_flow_style=False)
+    result = writeFile(filePath, data)
+    logger.info('Write yml file success %s' % filePath)
     return result
 
-def ymlLoader(file) :
-    data = readFile(file)
-    dictData = yaml.load(data)
 
+def ymlLoader(filePath) : 
+    stream = readFile(filePath)
+    dictData = ordered_load(stream, yaml.SafeLoader)
+    # dictData = yaml.load(data)
     return dictData
         
 def writeFile(file, data) :

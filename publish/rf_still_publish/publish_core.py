@@ -26,14 +26,15 @@ publishOrder = ['publish_file', 'publish_image']
 publishWipOrder = ['save_file', 'publish_image']
 sg_publishOrder = ['publish_version', 'set_task', 'upload_thumbnail', 'upload_media']
 
-modelOrder = ['export_abc', 'export_gpu']
+modelOrder = ['export_abc', 'export_gpu', 'publish_geo']
 rigOrder = ['export_abc', 'export_gpu']
-postPublishOrder = ['summarized_info']
+postPublishOrder = ['check_ad', 'summarized_info']
 
 wipPublishOrder = ['save_file', 'publish_image']
+wipPostPublistOrder = []
 
 filePublishPreset = {'wip': False, 'rev': False, 'arpv': True}
-overridePublishPreset = {'wip': [precheckOrder, wipPublishOrder, sg_publishOrder, postPublishOrder], 
+overridePublishPreset = {'wip': [precheckOrder, wipPublishOrder, sg_publishOrder, wipPostPublistOrder], 
 						'filePublish': [precheckOrder, publishOrder, sg_publishOrder, postPublishOrder]}
 
 def load_publish_list(pathInfo, preset): 
@@ -43,6 +44,7 @@ def load_publish_list(pathInfo, preset):
 		precheckOrderFilter, publishOrderFilter, sg_publishOrderFilter, postPublishOrderFilter = overridePublishPreset[preset]
 
 	deptPubl = []
+	dept = None
 	standardPubls = set_order([a for a in getmembers(publish) if isfunction(a[1])], publishOrderFilter)
 	precheckList = set_order([a for a in getmembers(precheck) if isfunction(a[1])], precheckOrderFilter)
 	sgPubls = set_order([a for a in getmembers(sg_publish) if isfunction(a[1])], sg_publishOrderFilter)
@@ -55,8 +57,8 @@ def load_publish_list(pathInfo, preset):
 			dept = model 
 
 		if pathInfo.step == 'rig': 
-			deptPubl = set_order([a for a in getmembers(model) if isfunction(a[1])], rigOrder)
-			dept = model 
+			deptPubl = set_order([a for a in getmembers(rig) if isfunction(a[1])], rigOrder)
+			dept = rig 
 
 
 		# disable department publish if preset is work in progresss

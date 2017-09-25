@@ -1,4 +1,5 @@
 # v.0.0.1 basic ui working
+# v.0.1.0 publish function implemented
 
 #Import python modules
 import sys, os, re, subprocess, inspect
@@ -106,8 +107,8 @@ class RFStillPublish(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         #Setup Window
         super(RFStillPublish, self).__init__(parent)
-        # self.ui = ui.Ui_StillPublishUI()
-        # self.ui.setupUi(self)
+
+        # ui read
         uiFile = '%s/ui.ui' % moduleDir
 
         if isMaya: 
@@ -115,7 +116,7 @@ class RFStillPublish(QtWidgets.QMainWindow):
         else: 
             self.ui = load.loadUI(uiFile, self)
         self.ui.show()
-        self.setWindowTitle('RF Still Publish v.0.0.1')
+        self.ui.setWindowTitle('RF Still Publish v.0.1.0')
 
         self.pathInfo = path_info.PathInfo()
 

@@ -50,8 +50,9 @@ def publish_file(entity=None):
 			info.set('primaryOutput', 'publishFile', publishFile)
 			
 			# copy to hero 
-			publishHeroResult = file_utils.copy(saveResult, libFile)
-			info.set('primaryOutput', 'heroFile', libFile)
+			# disable. Not all department export to lib, move to dept publish
+			# publishHeroResult = file_utils.copy(saveResult, libFile)
+			# info.set('primaryOutput', 'heroFile', libFile)
 
 			# copy to current work version (short cut for overwritten save)
 			workResult = file_utils.copy(saveResult, saveWorkFile)
@@ -66,9 +67,9 @@ def publish_file(entity=None):
 			logger.error('Publish to %s has failed' % publishFile)
 			errorMessage.append('Publish to %s has failed' % publishFile)
 
-		if not publishHeroResult: 
-			logger.error('Publish to hero %s has failed' % libFile)
-			errorMessage.append('Publish to %s has failed' % libFile)
+		# if not publishHeroResult: 
+		# 	logger.error('Publish to hero %s has failed' % libFile)
+		# 	errorMessage.append('Publish to %s has failed' % libFile)
 
 		if not workResult: 
 			logger.error('Overwrite work version %s has failed' % saveWorkFile)
