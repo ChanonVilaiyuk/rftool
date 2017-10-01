@@ -59,7 +59,7 @@ class TaskInfo(object):
 
 
 
-        self.templateDict = dict()
+        self.templateDict = OrderedDict()
         self.set_template()
 
     def read(self): 
@@ -94,7 +94,7 @@ class TaskInfo(object):
         logger.debug('data append %s' % data)
 
     def set(self, key1, key2, value): 
-        tempDict = dict()
+        tempDict = OrderedDict()
         if key1 in self.primaryKey: 
             if key2 in self.secondaryKey: 
                 data = self.read()
@@ -138,10 +138,10 @@ class TaskInfo(object):
         self.templateDict['department'] = self.entity.step 
         self.templateDict['taskName'] = self.entity.taskName
 
-        self.templateDict['work'] = dict()
-        self.templateDict['primaryOutput'] = dict()
-        self.templateDict['secondaryOutput'] = dict()
-        self.templateDict['shotgun'] = dict()
+        self.templateDict['work'] = OrderedDict()
+        self.templateDict['primaryOutput'] = OrderedDict()
+        self.templateDict['secondaryOutput'] = OrderedDict()
+        self.templateDict['shotgun'] = OrderedDict()
 
 
 class AssetInfo(object):
@@ -151,7 +151,7 @@ class AssetInfo(object):
         self.entity = entity
         self.dataExt = 'yml'
 
-        self.templateDict = dict()
+        self.templateDict = OrderedDict()
         self.set_template()
 
     def write(self): 
@@ -259,7 +259,7 @@ def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
 #     return dictData
 
 def ymlDumper(filePath, dictData) : 
-    data = ordered_dump(dictData, Dumper=yaml.SafeDumper)
+    data = ordered_dump(dictData, Dumper=yaml.SafeDumper, default_flow_style=False)
     # data = yaml.dump(dictData, default_flow_style=False)
     result = writeFile(filePath, data)
     logger.info('Write yml file success %s' % filePath)
