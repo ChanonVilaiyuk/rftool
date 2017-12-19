@@ -1,0 +1,8 @@
+*.py[cod]
+version.txt
+.ropeproject
+.cache
+Session.vim
+config.json
+
+
