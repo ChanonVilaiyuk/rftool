@@ -11,6 +11,7 @@ if os.environ.get('RFSCRIPT', False):
 		sys.path.append(path)
 
 import config
+reload(config)
 from shotgun_api3 import Shotgun
 
 # connection to server
@@ -18,6 +19,12 @@ server = config.server
 script = config.script
 id = config.id
 sg = Shotgun(server, script, id)
+# sg = None
+
+def init_key(inputKey): 
+	script, id = config.get_key(inputKey)
+	global sg
+	sg = Shotgun(server, script, id)
 
 ################# find/find_one ###################
 
@@ -210,6 +217,7 @@ def update_subasset_list(id, entities, sg_field='assets'):
 	updateEntities = entities
 	if currentEntities.get('assets'): 
 		updateEntities = updateEntities + currentEntities.get('assets')
+	print updateEntities
 	data = {sg_field: updateEntities}
 	return sg.update('Asset', id, data)
 
@@ -307,3 +315,16 @@ def publish_version(projectEntity, entity, taskEntity, userEntity, versionName, 
 	logger.debug('Version %s' % versionEntity)
 
 	return versionEntity
+
+
+def publish_file(publishName, projectEntity, publishTypeEntity, taskEntity, versionEntity, path, pathCache, status, *args): 
+	data = { 'project': projectEntity,
+			 'code': publishName,
+			 'published_file_type': publishTypeEntity,
+			 'task': taskEntity,
+			 'sg_status_list': status, 
+			 'version': versionEntity, 
+			 'path' : {'local_path': path, 'name': os.path.basename(path)}, 
+			 'path_cache': pathCache}
+
+	publishFileEntity = sg.create('PublishedFile', data)

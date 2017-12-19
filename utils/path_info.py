@@ -375,10 +375,13 @@ class PathInfo(object):
 
         return '{0}.{1}'.format('_'.join(elems), ext)
 
-    def getRefs(self):
+    def getRefs(self, ext=''):
         if os.path.exists(self.libPath()):
             files = listFile(self.libPath())
-            return [a for a in files if os.path.splitext(a)[-1] == '.%s' % config.refExt]
+            if not ext: 
+                return [a for a in files if os.path.splitext(a)[-1] == '.%s' % config.refExt]
+            if ext == '*': 
+                return [a for a in files]
 
     def shotName(self, project=False, step=False, fullName=True):
         nameElems = []

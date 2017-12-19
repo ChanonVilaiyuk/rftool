@@ -231,6 +231,13 @@ def exportGPUCacheGrp(exportGrp, exportPath, abcName, time = 'still') :
         return result
 
 
+def importGpuCache(nodeName, gpuPath): 
+    nodeName = mc.createNode('gpuCache', n=nodeName)
+    mc.setAttr('%s.cacheFileName' % nodeName, gpuPath, e=True, type='string')
+    mc.setAttr('%s.cacheGeomPath' % nodeName, '|', e=True, type='string')
+
+    return gpuPath
+
 def etc() :
     path = 'O:/pipeline/abcTest/asset/3D/prop/tree/pineA/ref'
     assetName = path.split('/')[-2]

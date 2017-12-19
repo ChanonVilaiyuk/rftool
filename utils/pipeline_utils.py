@@ -58,8 +58,10 @@ def create_asset_template(root, project, assetType, assetSubType, assetName):
         for step in steps:
             src = '%s/%s' % (templatePath, step)
             dst = '%s/%s' % (assetPath, step)
-            result = file_utils.copyTree(src, dst)
-            logger.debug('Copy %s -> %s success' % (src, dst))
+
+            if not os.path.exists(dst): 
+                result = file_utils.copyTree(src, dst)
+                logger.debug('Copy %s -> %s success' % (src, dst))
 
         create_standin(asset)
         repath_ad(asset)
@@ -116,11 +118,54 @@ def create_standin(asset):
                 newName = ref.replace(config.libFileReplaceKw, asset.name)
                 src = '%s/%s' % (refPath, ref)
                 dst = '%s/%s' % (refPath, newName)
-                os.rename(src, dst)
-                logger.debug('Renaming %s -> %s' % (src, dst))
-                count+=1
+                if not os.path.exists(dst): 
+                    os.rename(src, dst)
+                    logger.debug('Renaming %s -> %s' % (src, dst))
+                    count+=1
+                else: 
+                    logger.debug('File exists. Cannot rename %s' % dst)
 
     logger.info('renaming %s files standin complete (%s)' % (count, refPath))
+
+
+def create_lib_template(root, project, assetType, assetSubType, assetName):
+    scriptServer = os.environ['RFSCRIPT']
+    templateLibPath = ''
+    templateLibPath = '%s/RFPROJECT/%s' % (template.templatePath, config.ref)
+
+    asset = path_info.PathInfo(project=project, entity=config.asset, entitySub1=assetType, entitySub2=assetSubType, name=assetName)
+    assetLibPath = '%s/%s' % (asset.entityPath(root), config.ref)
+    libFiles = file_utils.listFile(templateLibPath)
+
+    if not os.path.exists(assetLibPath):
+        os.makedirs(assetLibPath)
+
+    for libFile in libFiles:
+        src = '%s/%s' % (templateLibPath, libFile)
+        dst = '%s/%s' % (assetLibPath, libFile)
+
+        if not os.path.exists(dst): 
+            result = file_utils.copy(src, dst)
+            logger.debug('Copy %s -> %s success' % (src, dst))
+
+            if config.libFileReplaceKw in libFile:
+                newName = libFile.replace(config.libFileReplaceKw, asset.name)
+                renSrc = dst
+                renDst = '%s/%s' % (assetLibPath, newName)
+
+                if not os.path.exists(renDst): 
+                    os.rename(renSrc, renDst)
+                    logger.debug('Rename %s -> %s' % (renSrc, renDst))
+
+                else: 
+                    os.remove(renSrc)
+                    logger.debug('Remove existing template %s' % renSrc)
+
+
+    create_standin(asset)
+    repath_ad(asset)
+
+    return True
 
 
 def repath_ad(asset):
@@ -229,3 +274,30 @@ def search_replace_file(srcFile, dstFile, replaceDict) :
     f.close()
 
     return True
+
+
+def relink_texture(): 
+    fileNodes = mc.ls(type='file')
+    asset = path_info.PathInfo()
+    texturePath = asset.texturePath()
+    res = asset.file_res()
+    assetTexturePath = '%s/%s' % (texturePath, res)
+
+    for node in fileNodes: 
+        path = mc.getAttr('%s.fileTextureName' % node)
+        
+        if not assetTexturePath in path: 
+            # path not valid 
+            filename = os.path.basename(path)
+            newPath = '%s/%s' % (assetTexturePath, filename)
+
+            if not os.path.exists(newPath): 
+                file_utils.copy(path, newPath)
+
+            # link 
+            mc.setAttr('%s.fileTextureName' % node, newPath, type='string')
+            logger.info('link success %s' % newPath)
+
+        else: 
+            logger.info('texture already in pipeline %s' % path)
+

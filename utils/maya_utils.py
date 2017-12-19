@@ -4,7 +4,6 @@ try:
     import maya.cmds as mc
     import maya.mel as mm
     isMaya = True
-    import asm_utils
 
 except ImportError: 
     isMaya = False
@@ -14,19 +13,19 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-if isMaya: 
-    for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
-        if os.path.exists(path + '/AbcImport.mll'):
-            if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
-                mc.loadPlugin(path + '/AbcImport.mll')
+# if isMaya: 
+#     for path in os.environ['MAYA_PLUG_IN_PATH'].split(';'):
+#         if os.path.exists(path + '/AbcImport.mll'):
+#             if not mc.pluginInfo('AbcImport.mll', q=True, l=True):
+#                 mc.loadPlugin(path + '/AbcImport.mll')
 
-        if os.path.exists(path + '/AbcExport.mll'):
-            if not mc.pluginInfo('AbcExport.mll', q=True, l=True):
-                mc.loadPlugin(path + '/AbcExport.mll')
+#         if os.path.exists(path + '/AbcExport.mll'):
+#             if not mc.pluginInfo('AbcExport.mll', q=True, l=True):
+#                 mc.loadPlugin(path + '/AbcExport.mll')
 
-        if os.path.exists(path + '/gpuCache.mll'):
-            if not mc.pluginInfo('gpuCache.mll', q=True, l=True):
-                mc.loadPlugin(path + '/gpuCache.mll')
+#         if os.path.exists(path + '/gpuCache.mll'):
+#             if not mc.pluginInfo('gpuCache.mll', q=True, l=True):
+#                 mc.loadPlugin(path + '/gpuCache.mll')
 
 def get_path():
     return mc.file(q=True, loc=True)
@@ -374,7 +373,14 @@ def create_reference(assetName, path):
         result = mc.file(path, r=True, ns=namespace)
         return namespace
 
+def import_reference(assetName, path):
+    if os.path.exists(path):
+        namespace = get_namespace('%s_001' % assetName)
+        result = mc.file(path, i=True, ns=namespace)
+        return namespace
+
 def create_asm_reference(assetName, path):
+    import asm_utils
     if os.path.exists(path):
         namespace = get_namespace('%s_001' % assetName)
         arNode = asm_utils.createARNode()
@@ -438,6 +444,7 @@ def export_selection(exportPath, obj):
 
 
 def export_gpu(objs, dstDir, filename, time='still'):
+    import asm_utils
     gpuPath = '%s/%s.abc' % (dstDir, filename)
     exportResult = False
 
@@ -454,6 +461,29 @@ def export_gpu(objs, dstDir, filename, time='still'):
 
     if exportResult:
         return gpuPath
+
+
+def export_geo(objs, dstDir, filename, removeRig=True):
+    import pipeline_utils 
+    geoPath = '%s/%s' % (dstDir, filename)
+    exportResult = False
+
+    if not os.path.exists(geoPath):
+        mtime = 0
+    else:
+        mtime = os.path.getmtime(geoPath)
+
+    if removeRig: 
+        remove_rig(objs, pipeline_utils.config.ctrlGrp)
+
+    result = mc.file(geoPath, f=True, es=True, type='mayaAscii')
+
+    if os.path.exists(geoPath):
+        if not mtime == os.path.getmtime(geoPath):
+            exportResult = True
+
+    if exportResult:
+        return geoPath
 
 
 def shiftKey(type = 'default', frameRange = [1, 10000], frame = 0) : 
@@ -638,3 +668,130 @@ def exportGPUCacheGrp(exportGrp, exportPath, abcName, time = 'still') :
         gpupath = '%s/%s.abc' % (exportPath,abcName)
 
         return result 
+
+
+def find_same_poly(sel = True) : 
+    # find similar polygon by count faces
+    sels = mc.ls(sl = True)
+
+    if sels : 
+        numFace = mc.polyEvaluate(sels[0], f = True, fmt = True)
+
+        matchPoly = []
+        matchPoly.append(sels[0])
+
+        mc.select(cl = True)
+        allPlys = mc.ls(type = 'mesh', l = True)
+
+        for each in allPlys : 
+            transform = mc.listRelatives(each, p = True, f = True)[0]
+            currentFaceCount = mc.polyEvaluate(each, f = True, fmt = True)
+            
+            if currentFaceCount == numFace : 
+                matchPoly.append(transform)
+                
+        if sel : 
+            mc.select(matchPoly)
+
+        return matchPoly
+
+
+def find_same_poly2(obj) : 
+    # find similar polygon by count faces
+
+    numFace = mc.polyEvaluate(obj, f = True, fmt = True)
+
+    matchPoly = []
+    matchPoly.append(obj)
+
+    mc.select(cl = True)
+    allPlys = mc.ls(type = 'mesh', l = True)
+
+    for each in allPlys : 
+        transform = mc.listRelatives(each, p = True, f = True)[0]
+        currentFaceCount = mc.polyEvaluate(each, f = True, fmt = True)
+        
+        if currentFaceCount == numFace : 
+            if not transform in matchPoly : 
+                matchPoly.append(transform)
+
+    return matchPoly
+
+def remove_rig(rigGrp, ctrlGrp): 
+    """ remove rig from given rigGrp """ 
+    childs = mc.listRelatives(rigGrp)
+    removeObj = [a for a in childs if ctrlGrp in a]
+
+    # show transform 
+    show_hide_transform([rigGrp], state=True)
+
+    if removeObj: 
+        mc.delete(removeObj)
+
+
+def show_hide_transform(objs, attrs=['tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'sx', 'sy', 'sz'], state=True): 
+    lock = not state
+    for obj in objs: 
+        for attr in attrs: 
+            mc.setAttr('%s.%s' %(obj, attr), l=lock, cb=state)
+            mc.setAttr('%s.%s' %(obj, attr), k=state)
+
+
+
+def remove_plugins(): 
+    unknownPlugins = mc.unknownPlugin(q=True, list=True)
+
+    if unknownPlugins: 
+        for unknownPlugin in unknownPlugins: 
+            mc.unknownPlugin(unknownPlugin, remove=True)
+
+        logger.info('Remove %s unknownPlugins' % len(unknownPlugins))
+        return 
+    logger.info('No unknownPlugins')
+
+
+
+def get_ref_path(obj) : 
+    return mc.referenceQuery(obj, f = True)
+
+
+def get_node_namespace(obj) : 
+    path = get_ref_path(obj) 
+    return mc.file(path, q = True, namespace = True)
+
+
+def list_top_parent(obj): 
+    parents = mc.listRelatives(obj, p=True)
+    # take first parent in the list 
+    if parents: 
+        return list_top_parent(parents[0])
+    else: 
+        return obj
+
+
+def find_ply(transform, f=False): 
+    """ find polygon under transform """ 
+    childs = mc.listRelatives(transform, ad=True, f=True)
+
+    if childs: 
+        meshes = list(set([mc.listRelatives(a, p=True, f=f)[0] for a in childs if mc.objectType(a, isType='mesh')]))
+        return meshes
+
+
+def add_prefix(transform, prefix, remove='', hi=True): 
+    """ rename prefix """ 
+    mc.select(transform, hi=True)
+    hierarchy = mc.ls(sl=True, l=True)
+
+    for node in hierarchy[::-1]: 
+        if mc.objectType(node, isType='transform'): 
+            shortName = node.split('|')[-1]
+            if remove: 
+                shortName = shortName.replace(remove, '')
+            newName = '%s%s' % (prefix, shortName)
+            mc.rename(node, newName) 
+
+    mc.select(cl=True)
+
+
+
