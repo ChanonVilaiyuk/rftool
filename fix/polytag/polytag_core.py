@@ -263,30 +263,7 @@ def get_attr(ply):
 
     return assetName, path, data
 
-def switch(ply, level, srcPly=None): 
-    assetAttr = '%s.%s' % (ply, 'assetName')
-    pathAttr = '%s.%s' % (ply, 'path')
-    assetDataAttr = '%s.%s' % (ply, 'assetData')
-    parent = mc.listRelatives(ply, p=True)
 
-    if mc.objExists(assetAttr) and mc.objExists(pathAttr): 
-        assetName = mc.getAttr(assetAttr)
-        path = mc.getAttr(pathAttr)
-        data = eval(mc.getAttr(assetDataAttr))
-        data.update({'original': path})
-        asset = path_info.PathInfo(path=path)
-        refPath = '%s/%s_%s.ma' % (asset.libPath(), asset.name, level)
-
-        if os.path.exists(refPath): 
-            assetPlc = place_asset(refPath, srcPly=srcPly)
-            transfer_attr(ply, assetPlc, level)
-            
-            mc.delete(mc.parentConstraint(ply, assetPlc))
-            mc.delete(ply)
-            assetPlc = mc.rename(assetPlc, ply)
-            mc.parent(assetPlc, parent)
-
-            return assetPlc
 
 
 def place_asset(refPath, srcPly=None): 
