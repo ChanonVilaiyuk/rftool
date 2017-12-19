@@ -18,14 +18,14 @@ reload(rig)
 
 ui = None
 
-import config
-reload(config)
+import publish_config
+reload(publish_config)
 
 def load_publish_list(pathInfo, preset): 
 	# 
 	# preset functions 
-	if preset in config.overridePublishPreset.keys(): 
-		precheckOrderFilter, publishOrderFilter, sg_publishOrderFilter, postPublishOrderFilter = config.overridePublishPreset[preset]
+	if preset in publish_config.overridePublishPreset.keys(): 
+		precheckOrderFilter, publishOrderFilter, sg_publishOrderFilter, postPublishOrderFilter = publish_config.overridePublishPreset[preset]
 
 	deptPubl = []
 	dept = None
@@ -37,16 +37,16 @@ def load_publish_list(pathInfo, preset):
 
 	if pathInfo.path: 
 		if pathInfo.step == 'model': 
-			deptPubl = set_order([a for a in getmembers(model) if isfunction(a[1])], config.modelOrder)
+			deptPubl = set_order([a for a in getmembers(model) if isfunction(a[1])], publish_config.modelOrder)
 			dept = model 
 
 		if pathInfo.step == 'rig': 
-			deptPubl = set_order([a for a in getmembers(rig) if isfunction(a[1])], config.rigOrder)
+			deptPubl = set_order([a for a in getmembers(rig) if isfunction(a[1])], publish_config.rigOrder)
 			dept = rig 
 
 
-		# disable department publish if preset is work in progresss
-		if preset == 'wip': 
+		# disable department publish if preset is work in progresss or review
+		if preset in ['wip', 'rev']: 
 			deptPubl = []
 
 		funcDict['publ'] = (publish, standardPubls)

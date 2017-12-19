@@ -12,7 +12,10 @@ postPublishOrder = ['check_ad', 'summarized_info']
 
 wipPublishOrder = ['save_file', 'publish_image']
 wipPostPublistOrder = []
+reviewPublishOrder = ['publish_file', 'publish_image']
+reviewPostPublistOrder = []
 
 filePublishPreset = {'wip': False, 'rev': False, 'arpv': True}
 overridePublishPreset = {'wip': [precheckOrder, wipPublishOrder, sg_publishOrder, wipPostPublistOrder], 
+						'rev': [precheckOrder, reviewPublishOrder, sg_publishOrder, reviewPostPublistOrder], 
 						'filePublish': [precheckOrder, publishOrder, sg_publishOrder, postPublishOrder]}

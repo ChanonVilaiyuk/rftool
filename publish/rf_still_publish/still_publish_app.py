@@ -60,13 +60,12 @@ from functools import partial
 # from rftool import publish
 from rftool.utils import file_utils
 from rftool.utils import path_info
-from rftool.utils import sg_wrapper
-from rftool.utils import sg_process
 from rftool.publish.utils import pub_utils
 from rftool.utils.ui import combo_browser_widget
 from rftool.utils.ui import pipeline_widget
 from startup import config
 import publish_core
+import publish_config
 
 module_path = sys.modules[__name__].__file__
 module_dir  = os.path.dirname(module_path)
@@ -338,9 +337,10 @@ class RFStillPublish(QtWidgets.QMainWindow):
     # publish parts 
     def load_publish_list(self): 
         filePublish = self.filePublishCheckBox.isChecked()
-        preset = 'wip'
+        preset = self.statusWidget.get_task_status()
         if filePublish: 
             preset = 'filePublish'
+
 
         publDict = publish_core.load_publish_list(self.pathInfo, preset)
         self.publishWidget.listWidget.clear()
@@ -423,8 +423,14 @@ class RFStillPublish(QtWidgets.QMainWindow):
         """ signal from changing status """ 
         status = self.statusWidget.get_task_status()
         filePublish = True
-        if status in publish_core.filePublishPreset.keys(): 
-            filePublish = publish_core.filePublishPreset[status]
+
+        if status in publish_config.filePublishPreset.keys(): 
+            filePublish = publish_config.filePublishPreset[status]
+
+        if filePublish == self.filePublishCheckBox.isChecked(): 
+            # call signal 
+            self.load_publish_list()
+
 
         if filePublish: 
             self.filePublishCheckBox.setEnabled(False)
@@ -457,6 +463,9 @@ class RFStillPublish(QtWidgets.QMainWindow):
             
             # set publish entity object from source lineEdit ** very important here 
             entity = path_info.PathInfo(uiInfo.get('source'))
+            # set entity from ui selection 
+            # 'project': 'project', 'entity'='asset', entitySub1='character', entitySub2='main', name='aiya', step=model, task='model_md'
+            # entity = path_info.PathInfo()
             entity.task = taskName
 
             publLists = [self.publishWidget.listWidget.item(row) for row in range(self.publishWidget.listWidget.count())]

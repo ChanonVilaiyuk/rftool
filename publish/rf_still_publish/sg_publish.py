@@ -8,7 +8,7 @@ from rftool.utils import sg_process
 from rftool.utils import path_info
 from rftool.publish.utils import publish_info
 reload(sg_process)
-
+sg_process.init_key('asset_publish')
 
 ui = None
 
