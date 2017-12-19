@@ -136,6 +136,7 @@ class SGAssetLoader(QtWidgets.QMainWindow):
 
         # listWidget
         self.ui.typeAsset_listWidget.currentItemChanged.connect(self.list_subtype)
+        self.ui.subTypeAsset_listWidget.currentItemChanged.connect(self.load_asset)
 
         # self.ui.typeAsset_listWidget.itemClicked.connect(self.list_thumbnail)
         # self.ui.subTypeAsset_listWidget.itemClicked.connect(self.list_thumbnail)
@@ -269,47 +270,49 @@ class SGAssetLoader(QtWidgets.QMainWindow):
     def get_thumbnail(self,img_path):
         return file_utils.get_latest_file(img_path) 
 
+    
     def load_asset(self):
+        """ loading asset """ 
 
-        self.assets = dict()
-        self.typ_name = None
-        self.sub_name = None
-        self.typ_path = None
-        self.sub_path = None
-        self.get_asset_path()
+        # self.assets = dict()
+        # self.typ_name = None
+        # self.sub_name = None
+        # self.typ_path = None
+        # self.sub_path = None
+        # self.get_asset_path()
 
-        try:
-            self.typ_name = self.ui.typeAsset_listWidget.currentItem().text()
-            self.sub_name = self.ui.subTypeAsset_listWidget.currentItem().text()
-        except AttributeError as attrExc:
-            pass
+        # try:
+        #     self.typ_name = self.ui.typeAsset_listWidget.currentItem().text()
+        #     self.sub_name = self.ui.subTypeAsset_listWidget.currentItem().text()
+        # except AttributeError as attrExc:
+        #     pass
 
-        # get type and subtype path
-        if self.typ_name:
-            self.typ_path = self.mode_path + '/' + self.typ_name
+        # # get type and subtype path
+        # if self.typ_name:
+        #     self.typ_path = self.mode_path + '/' + self.typ_name
 
-        if self.sub_name:
-            self.sub_path = self.typ_path + '/' + self.sub_name
+        # if self.sub_name:
+        #     self.sub_path = self.typ_path + '/' + self.sub_name
 
-        # get asset lists  
-        if self.typ_path and os.path.exists(self.typ_path):
-            for index,sub in enumerate(self.subtypes):
-                path = self.typ_path + '/' + sub
-                if os.path.exists(path) and sub == self.sub_name:
+        # # get asset lists  
+        # if self.typ_path and os.path.exists(self.typ_path):
+        #     for index,sub in enumerate(self.subtypes):
+        #         path = self.typ_path + '/' + sub
+        #         if os.path.exists(path) and sub == self.sub_name:
 
-                    for name in file_utils.listFolder(path):
-                        #asset_path = path + '/' + name
-                        img_path = path + '/' + name + '/images'
-                        lib_path = path + '/' + name + '/lib'
+        #             for name in file_utils.listFolder(path):
+        #                 #asset_path = path + '/' + name
+        #                 img_path = path + '/' + name + '/images'
+        #                 lib_path = path + '/' + name + '/lib'
 
-                        self.assets[name] = { 'image' : self.get_thumbnail(img_path), 'lib' : lib_path }
-        if self.sub_path and os.path.exists(self.sub_path):
-            for name in file_utils.listFolder(path):
-                #asset_path = path + '/' + name
-                img_path = path + '/' + name + '/images'
-                lib_path = path + '/' + name + '/lib'
+        #                 self.assets[name] = { 'image' : self.get_thumbnail(img_path), 'lib' : lib_path }
+        # if self.sub_path and os.path.exists(self.sub_path):
+        #     for name in file_utils.listFolder(path):
+        #         #asset_path = path + '/' + name
+        #         img_path = path + '/' + name + '/images'
+        #         lib_path = path + '/' + name + '/lib'
 
-                self.assets[name] = { 'image' : self.get_thumbnail(img_path), 'lib' : lib_path }
+        #         self.assets[name] = { 'image' : self.get_thumbnail(img_path), 'lib' : lib_path }
 
     def set_grid_size(self):
         # set grid size
