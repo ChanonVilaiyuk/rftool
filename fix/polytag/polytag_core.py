@@ -183,13 +183,19 @@ def ui_utils():
     mc.window(ui, e=True, wh=[200, 200])
 
 
-def list_polytag(): 
-    meshes = mc.ls(type='mesh')
+def list_polytag(transforms=None): 
+    meshTransforms = []
     info = dict()
+    
+    if transforms: 
+        meshTransforms = transforms
+    if not transforms: 
+        meshes = mc.ls(type='mesh')
 
-    if meshes: 
+    if not meshTransforms: 
         meshTransforms = [mc.listRelatives(a, p=True, f=True)[0] for a in meshes if mc.listRelatives(a, p=True)]
         
+    if meshTransforms: 
         for mesh in meshTransforms: 
             projectAttr = '%s.%s' % (mesh, 'project')
             assetAttr = '%s.%s' % (mesh, 'assetName')
@@ -213,34 +219,97 @@ def list_polytag():
 
 def switch_selection(level): 
     sels = mc.ls(sl=True)
-    info = dict()
-    if sels: 
-        for ply in sels: 
-            if check_attr(ply): 
-                assetName, path, data = get_attr(ply)
+    info = list_polytag(transforms=sels)
 
-                if assetName in info.keys(): 
-                    info.get(assetName).append(ply)
+    if sels and info: 
+        for assetName, values in info.iteritems(): 
+            asset, plys = values
+            print assetName, values 
+            switch(plys, level, mode='duplicate')
 
-                else: 
-                    info.update({assetName: [ply]})
 
-    if info: 
-        for assetName, plys in info.iteritems(): 
-            if len(plys) == 1: 
-                switch(plys[0], level)
+def switch(plys, level, mode='normal'): 
+    """ if mode = normal -> import all asset 
+    if mode = duplicate -> duplicate from the first item """ 
+    inputPly = None 
 
-            if len(plys) > 1: 
-                original = None
-                for i, ply in enumerate(plys): 
-                    if i == 0: 
-                        original = switch(ply, level)
-                    else: 
-                        if original: 
-                            switch(ply, level, srcPly=original)
-                        else: 
-                            switch(ply, level)
+    for i, ply in enumerate(plys): 
+        if check_attr(ply): 
+            assetName, path, data = get_attr(ply)
+            asset = path_info.PathInfo(path=path)
+            refPath = '%s/%s_%s.ma' % (asset.libPath(), asset.name, level)
 
+            if os.path.exists(refPath): 
+
+                plcAsset = place_asset(refPath, inputPly=inputPly)
+                transfer_attr(ply, plcAsset, level)
+                snap_target(plcAsset, ply)
+
+                mc.delete(ply)
+                plcAsset = mc.rename(plcAsset, ply)
+
+                if i == 0 and mode == 'duplicate': 
+                    inputPly = plcAsset
+
+
+
+def place_asset(refPath, inputPly=None): 
+    """ if inputPly, use inputPly to duplicate """ 
+    if not inputPly: 
+        placeAssets = import_asset(refPath)
+
+    if inputPly: 
+        print 'duplicate'
+        placeAssets = mc.duplicate(inputPly)[0]
+
+    return placeAssets
+
+
+def import_asset(refPath): 
+    """ import asset and combine into 1 ply """ 
+    print 'import asset'
+    current = mc.ls(assemblies=True)
+    
+    mc.file(refPath, i=True)
+
+
+    placeAssets = [a for a in mc.ls(assemblies=True) if not a in current]
+    print 'node is %s' % placeAssets
+    allPlys = []
+    for each in placeAssets: 
+        plys = maya_utils.find_ply(each)
+
+        if plys: 
+            allPlys += plys
+
+    if allPlys: 
+        print 'allPlys is %s' % allPlys
+        if len(allPlys) == 1: 
+            print 'single ply'
+            mc.parent(allPlys[0], w=True)
+            placeAsset = allPlys[0]
+
+        if len(allPlys) > 1: 
+            print '> 1 ply'
+            placeAsset = mc.polyUnite(allPlys, mergeUVSets=True, ch=False, n='tmpAsset')
+
+        mc.delete(placeAssets)
+        return placeAsset
+
+    else:
+        # if no polygon at all, return top import group
+        return placeAssets[0]
+
+
+def snap_target(srcPly, target): 
+    mc.delete(mc.parentConstraint(target, srcPly))
+    mc.delete(mc.scaleConstraint(target, srcPly))
+
+    targetParent = mc.listRelatives(target, p=True)
+    srcParent = mc.listRelatives(srcPly, p=True)
+
+    if not srcParent == targetParent: 
+        mc.parent(srcPly, targetParent)
 
 
 def check_attr(ply): 
@@ -259,65 +328,22 @@ def get_attr(ply):
 
     assetName = mc.getAttr(assetNameAttr)
     path = mc.getAttr(pathAttr)
-    data = mc.getAttr(dataAttr)
+    data = eval(mc.getAttr(dataAttr))
 
     return assetName, path, data
 
 
-
-
-def place_asset(refPath, srcPly=None): 
-    print 'place asset %s' % refPath
-    namespace = 'tmpPlace'
-    current = mc.ls(assemblies=True)
-    node = ''
-
-    if not mc.namespace(ex=namespace): 
-        mc.namespace(add=namespace)
-    mc.namespace(set=namespace)
-    
-    if not srcPly: 
-        print 'import'
-        mc.file(refPath, i=True)
-        placeAssets = [a for a in mc.ls(assemblies=True) if not a in current]
-    if srcPly: 
-        print 'duplicate'
-        placeAssets = mc.duplicate(srcPly)
-    mc.namespace(set=':')
-
-    if placeAssets: 
-        node = extract_ply(placeAssets)
-    
-        return node
-
-
-def extract_ply(placeAssets): 
-    print 'import node is %s' % placeAssets
-    plys = maya_utils.find_ply(placeAssets[0])
-    print 'contains plys %s' % plys
-
-    if plys: 
-        if len(plys) > 1: 
-            print 'combine'
-            cmbPly = mc.polyUnite(plys, mergeUVSets=True, ch=False, n='tmpAsset')
-            mc.delete(placeAssets)
-            return cmbPly
-
-        if len(plys) == 1: 
-            print 'single object'
-            mc.parent(plys[0], w=True)
-
-            if not placeAssets[0] == plys[0]: 
-                mc.delete(placeAssets)
-            return plys[0]
-
-    else: 
-        print 'no polygon'
-        maya_utils.show_hide_transform(placeAssets, state=True)
-        return placeAssets[0]
-
-
 def transfer_attr(src, dst, level): 
+    if not mc.objExists('%s.id'): 
+        add_id(dst)
+        id = mc.getAttr('%s.id' % src)
+        mc.setAttr('%s.id' % dst, id)
+
+    if not mc.objExists('%s.project'): 
+        add_string(dst, 'project')
+        project = mc.getAttr('%s.project' % src)
+        mc.setAttr('%s.project' % dst, project, type='string')
+
     if not mc.objExists('%s.assetName'): 
         add_string(dst, 'assetName')
         assetName = mc.getAttr('%s.assetName' % src)
@@ -332,3 +358,4 @@ def transfer_attr(src, dst, level):
         add_string(dst, 'assetData')
         assetData = mc.getAttr('%s.assetData' % src)
         mc.setAttr('%s.assetData' % dst, assetData, type='string')
+
