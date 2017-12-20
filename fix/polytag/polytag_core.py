@@ -224,32 +224,40 @@ def switch_selection(level):
     if sels and info: 
         for assetName, values in info.iteritems(): 
             asset, plys = values
-            print assetName, values 
-            switch(plys, level, mode='duplicate')
+            result = switch(plys, level, mode='duplicate')
+
+            if len(plys) == len(result): 
+                print 'switch %s success %s' % (assetName, plys)
 
 
 def switch(plys, level, mode='normal'): 
     """ if mode = normal -> import all asset 
     if mode = duplicate -> duplicate from the first item """ 
     inputPly = None 
+    success = []
 
     for i, ply in enumerate(plys): 
         if check_attr(ply): 
             assetName, path, data = get_attr(ply)
             asset = path_info.PathInfo(path=path)
-            refPath = '%s/%s_%s.ma' % (asset.libPath(), asset.name, level)
+            refPath = '%s/%s_%s' % (asset.libPath(), asset.name, level)
+            print refPath
 
             if os.path.exists(refPath): 
 
                 plcAsset = place_asset(refPath, inputPly=inputPly)
                 transfer_attr(ply, plcAsset, level)
-                snap_target(plcAsset, ply)
+                plcAsset = snap_target(plcAsset, ply)
 
                 mc.delete(ply)
-                plcAsset = mc.rename(plcAsset, ply)
+                plcAsset = rename_node(plcAsset, ply)
 
                 if i == 0 and mode == 'duplicate': 
                     inputPly = plcAsset
+
+                success.append(ply)
+
+    return success
 
 
 
@@ -259,7 +267,6 @@ def place_asset(refPath, inputPly=None):
         placeAssets = import_asset(refPath)
 
     if inputPly: 
-        print 'duplicate'
         placeAssets = mc.duplicate(inputPly)[0]
 
     return placeAssets
@@ -269,36 +276,38 @@ def import_asset(refPath):
     """ import asset and combine into 1 ply """ 
     print 'import asset'
     current = mc.ls(assemblies=True)
-    
-    mc.file(refPath, i=True)
+    ext = os.path.splitext(refPath)[-1]
 
+    if ext == '.ma': 
+        mc.file(refPath, i=True)
+        placeAssets = [a for a in mc.ls(assemblies=True) if not a in current]
 
-    placeAssets = [a for a in mc.ls(assemblies=True) if not a in current]
-    print 'node is %s' % placeAssets
-    allPlys = []
-    for each in placeAssets: 
-        plys = maya_utils.find_ply(each)
+        allPlys = []
+        for each in placeAssets: 
+            plys = maya_utils.find_ply(each, f=True)
 
-        if plys: 
-            allPlys += plys
+            if plys: 
+                allPlys += plys
 
-    if allPlys: 
-        print 'allPlys is %s' % allPlys
-        if len(allPlys) == 1: 
-            print 'single ply'
-            mc.parent(allPlys[0], w=True)
-            placeAsset = allPlys[0]
+        if allPlys: 
+            if len(allPlys) == 1: 
+                placeAsset = mc.parent(allPlys[0], w=True)[0]
 
-        if len(allPlys) > 1: 
-            print '> 1 ply'
-            placeAsset = mc.polyUnite(allPlys, mergeUVSets=True, ch=False, n='tmpAsset')
+            if len(allPlys) > 1: 
+                placeAsset = mc.polyUnite(allPlys, mergeUVSets=True, ch=False, n='tmpAsset')
 
-        mc.delete(placeAssets)
-        return placeAsset
+            mc.delete(placeAssets)
+            return placeAsset
 
-    else:
-        # if no polygon at all, return top import group
-        return placeAssets[0]
+        else:
+            # if no polygon at all, return top import group
+            return placeAssets[0]
+
+    if ext == '.abc': 
+        gpuNode = mc.createNode('gpuCache')
+        mc.setAttr('%s.cacheFileName' % gpuNode, refPath, type='string')
+        transform = mc.listRelatives(gpuNode, p=True)[0]
+        return transform
 
 
 def snap_target(srcPly, target): 
@@ -309,7 +318,19 @@ def snap_target(srcPly, target):
     srcParent = mc.listRelatives(srcPly, p=True)
 
     if not srcParent == targetParent: 
-        mc.parent(srcPly, targetParent)
+        return mc.parent(srcPly, targetParent)[0]
+
+
+def rename_node(src, dst): 
+    result = mc.rename(src, dst)
+    # check if gpu in dst 
+    shape = mc.listRelatives(dst, s=True)
+
+    if shape: 
+        if mc.objectType(shape[0], isType='gpuCache'): 
+            mc.rename(shape[0], '%s_gpu' % dst)
+
+    return result
 
 
 def check_attr(ply): 

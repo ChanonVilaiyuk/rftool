@@ -5,6 +5,7 @@ _description = 'wip'
 #Import python modules
 import sys, os, re, shutil, random
 import subprocess
+from collections import OrderedDict
 
 import logging
 # logger = logging.getLogger(__name__)
@@ -64,7 +65,15 @@ def deleteUI(ui):
         deleteUI(ui)
 
 class Library: 
-    levelMap = ['model_pr', 'model_md', 'rig_pr', 'rig_md', 'gpu_pr', 'gpu_md', 'ren_md', 'rsproxy_md']
+    levelMap = OrderedDict()
+    levelMap['model_pr'] = 'model_pr.ma', 
+    levelMap['model_md'] = 'model_md.ma', 
+    levelMap['rig_pr'] = 'rig_pr.ma', 
+    levelMap['rig_md'] = 'rig_md.ma', 
+    levelMap['gpu_pr'] = 'gpu_pr.abc', 
+    levelMap['gpu_md'] = 'gpu_md.abc', 
+    levelMap['ren_md'] = 'ren_md.ma', 
+    levelMap['rsproxy_md'] = 'rsproxy_md.ma'
 
 
 class SGFileManager(QtWidgets.QMainWindow):
@@ -139,7 +148,8 @@ class SGFileManager(QtWidgets.QMainWindow):
         plys = mc.ls(sl=True)
 
         if self.ui.lib_listWidget.currentItem(): 
-            level = str(self.ui.lib_listWidget.currentItem().text())
+            level = Library.levelMap.get(str(self.ui.lib_listWidget.currentItem().text()))[0]
             polytag_core.switch_selection(level)
+            QtWidgets.QMessageBox.information(self, 'Complete', 'Switch %s assets complete. See script editor for details' % len(plys))
 
 
