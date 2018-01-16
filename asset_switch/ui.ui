@@ -34,7 +34,7 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,4,0,2,2">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,4,0,2,4">
       <item>
        <widget class="QPushButton" name="refresh_pushButton">
         <property name="text">

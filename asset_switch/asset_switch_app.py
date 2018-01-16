@@ -93,18 +93,19 @@ class RFAssetSwitch(QtWidgets.QMainWindow):
 
         self.ui.asset_listWidget.clear()
 
-        for rnNode in rnNodes: 
-            path = mc.referenceQuery(rnNode, f=True)
-            # widget display secton 
-            project = self.get_project(path)
-            res = Config.data.get(project, dict()).get('res')
+        if rnNodes: 
+            for rnNode in rnNodes: 
+                path = mc.referenceQuery(rnNode, f=True)
+                # widget display secton 
+                project = self.get_project(path)
+                res = Config.data.get(project, dict()).get('res')
 
-            widget = RefListWidgetItem(items=len(res))
-            item = QtWidgets.QListWidgetItem(self.ui.asset_listWidget)
-            data = self.set_display_info(widget, rnNode, item)
+                widget = RefListWidgetItem(items=len(res))
+                item = QtWidgets.QListWidgetItem(self.ui.asset_listWidget)
+                data = self.set_display_info(widget, rnNode, item)
 
-            item.setSizeHint(widget.sizeHint())
-            self.ui.asset_listWidget.setItemWidget(item, widget)
+                item.setSizeHint(widget.sizeHint())
+                self.ui.asset_listWidget.setItemWidget(item, widget)
 
 
 
@@ -186,9 +187,12 @@ class RFAssetSwitch(QtWidgets.QMainWindow):
 
 
     def list_res(self): 
-        project = self.get_project(mc.file(q=True, sn=True))
-        res = Config.data.get(project, dict()).get('res')
-        self.ui.res_comboBox.addItems(res)
+        sn = mc.file(q=True, sn=True)
+
+        if sn: 
+            project = self.get_project(sn)
+            res = Config.data.get(project, dict()).get('res')
+            self.ui.res_comboBox.addItems(res)
 
 
     def get_project(self, path): 
